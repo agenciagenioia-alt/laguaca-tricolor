@@ -684,6 +684,8 @@ export default function Home() {
   const [isMobileViewport, setIsMobileViewport] = useState(false);
   const loadingRef = useRef<HTMLDivElement | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
+  const ambientLayerRef = useRef<HTMLDivElement | null>(null);
+  const particlesCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const heroHeadlineFxRef = useRef<HTMLDivElement | null>(null);
   const heroHeadlinePointerRef = useRef({ rx: 0, ry: 0 });
   const heroHeadlineGyroRef = useRef({ rx: 0, ry: 0 });
@@ -838,6 +840,156 @@ export default function Home() {
   useEffect(() => {
     setHeroBackView((current) => ({ ...current, [activeHeroSlide.id]: false }));
   }, [heroSlideIdx]);
+
+  useEffect(() => {
+    const root = rootRef.current;
+    const ambient = ambientLayerRef.current;
+    if (!root || !ambient) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    let raf = 0;
+    let activeTimeout = 0;
+    const target = { x: 0.5, y: 0.34 };
+    const current = { x: 0.5, y: 0.34 };
+
+    const render = () => {
+      current.x += (target.x - current.x) * 0.075;
+      current.y += (target.y - current.y) * 0.075;
+      const pctX = `${(current.x * 100).toFixed(2)}%`;
+      const pctY = `${(current.y * 100).toFixed(2)}%`;
+      root.style.setProperty("--pointer-x", pctX);
+      root.style.setProperty("--pointer-y", pctY);
+      ambient.style.transform = `translate3d(${((current.x - 0.5) * 22).toFixed(2)}px, ${((current.y - 0.42) * 16).toFixed(2)}px, 0)`;
+      raf = window.requestAnimationFrame(render);
+    };
+
+    const onPointerMove = (e: PointerEvent) => {
+      target.x = Math.max(0, Math.min(1, e.clientX / window.innerWidth));
+      target.y = Math.max(0, Math.min(1, e.clientY / window.innerHeight));
+      root.classList.add("page-pointer-active");
+      window.clearTimeout(activeTimeout);
+      activeTimeout = window.setTimeout(() => root.classList.remove("page-pointer-active"), 1200);
+    };
+
+    raf = window.requestAnimationFrame(render);
+    window.addEventListener("pointermove", onPointerMove, { passive: true });
+
+    return () => {
+      window.cancelAnimationFrame(raf);
+      window.clearTimeout(activeTimeout);
+      window.removeEventListener("pointermove", onPointerMove);
+      root.classList.remove("page-pointer-active");
+      root.style.removeProperty("--pointer-x");
+      root.style.removeProperty("--pointer-y");
+      ambient.style.transform = "";
+    };
+  }, []);
+
+  useEffect(() => {
+    const canvas = particlesCanvasRef.current;
+    if (!canvas) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    type Particle = {
+      x: number;
+      y: number;
+      vx: number;
+      vy: number;
+      size: number;
+      alpha: number;
+      twinkle: number;
+      color: string;
+    };
+
+    const colors = ["#003893", "#FCD116", "#CE1126"];
+    const particles: Particle[] = [];
+    const pointer = { x: window.innerWidth * 0.5, y: window.innerHeight * 0.38 };
+    let raf = 0;
+    let width = 0;
+    let height = 0;
+    let dpr = 1;
+
+    const populate = (count: number) => {
+      particles.length = 0;
+      for (let i = 0; i < count; i += 1) {
+        particles.push({
+          x: Math.random() * width,
+          y: Math.random() * height,
+          vx: (Math.random() - 0.5) * 0.22,
+          vy: (Math.random() - 0.5) * 0.18,
+          size: 0.8 + Math.random() * 2.1,
+          alpha: 0.15 + Math.random() * 0.45,
+          twinkle: Math.random() * Math.PI * 2,
+          color: colors[Math.floor(Math.random() * colors.length)],
+        });
+      }
+    };
+
+    const resize = () => {
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas.width = Math.floor(width * dpr);
+      canvas.height = Math.floor(height * dpr);
+      canvas.style.width = `${width}px`;
+      canvas.style.height = `${height}px`;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      const count = width < 768 ? 22 : width < 1200 ? 34 : 48;
+      populate(count);
+    };
+
+    const onPointerMove = (e: PointerEvent) => {
+      pointer.x = e.clientX;
+      pointer.y = e.clientY;
+    };
+
+    const draw = () => {
+      ctx.clearRect(0, 0, width, height);
+      ctx.globalCompositeOperation = "lighter";
+
+      for (const p of particles) {
+        p.twinkle += 0.015 + p.size * 0.002;
+        const twinkle = 0.72 + Math.sin(p.twinkle) * 0.28;
+        const pullX = (pointer.x / width - 0.5) * 0.008;
+        const pullY = (pointer.y / height - 0.45) * 0.006;
+        p.vx += pullX;
+        p.vy += pullY;
+        p.vx *= 0.985;
+        p.vy *= 0.985;
+        p.x += p.vx;
+        p.y += p.vy;
+
+        if (p.x < -12) p.x = width + 12;
+        if (p.x > width + 12) p.x = -12;
+        if (p.y < -12) p.y = height + 12;
+        if (p.y > height + 12) p.y = -12;
+
+        ctx.beginPath();
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = p.alpha * twinkle;
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.globalAlpha = 1;
+      ctx.globalCompositeOperation = "source-over";
+      raf = window.requestAnimationFrame(draw);
+    };
+
+    resize();
+    raf = window.requestAnimationFrame(draw);
+    window.addEventListener("resize", resize);
+    window.addEventListener("pointermove", onPointerMove, { passive: true });
+
+    return () => {
+      window.cancelAnimationFrame(raf);
+      window.removeEventListener("resize", resize);
+      window.removeEventListener("pointermove", onPointerMove);
+      ctx.clearRect(0, 0, width, height);
+    };
+  }, []);
 
   useEffect(() => {
     if (!heroHeadlineGyroEnabled) return;
@@ -1356,7 +1508,7 @@ export default function Home() {
   }, [loadingPhase]);
 
   return (
-    <div ref={rootRef} className="relative min-h-screen">
+    <div ref={rootRef} className="page-pointer-root relative min-h-screen">
       {/* ── Loading Screen ────────────────────────────────────────────────── */}
       {loadingPhase !== "done" && (
         <div ref={loadingRef} className="loader-overlay">
@@ -1440,10 +1592,11 @@ export default function Home() {
       </div>
 
       {/* Capa ambiental: glows + noise */}
-      <div className="pointer-events-none fixed inset-0 z-[2]">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_oklch(0.86_0.15_85_/_0.08),_transparent_28%),radial-gradient(circle_at_80%_22%,_oklch(0.57_0.17_258_/_0.12),_transparent_24%)]" />
+      <div ref={ambientLayerRef} className="page-ambient-layer pointer-events-none fixed inset-0 z-[2]">
+        <div className="page-ambient-glow absolute inset-0 bg-[radial-gradient(circle_at_top,_oklch(0.86_0.15_85_/_0.08),_transparent_28%),radial-gradient(circle_at_80%_22%,_oklch(0.57_0.17_258_/_0.12),_transparent_24%)]" />
         <div className="noise-overlay" />
       </div>
+      <canvas ref={particlesCanvasRef} className="page-particles-canvas pointer-events-none fixed inset-0 z-[3]" aria-hidden="true" />
 
       {/* Mobile nav overlay */}
       {mobileNavOpen && (
