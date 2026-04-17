@@ -937,6 +937,7 @@ export default function Home() {
         });
       };
 
+      gsap.set("[data-hero='headline-strip']", { autoAlpha: 0, scaleX: 0.65, transformOrigin: "left center" });
       gsap.set("[data-hero='eyebrow']", { autoAlpha: 0, y: 18 });
       gsap.set("[data-hero='title']", { autoAlpha: 0, y: 42 });
       gsap.set("[data-hero='lead']", { autoAlpha: 0, y: 24 });
@@ -948,8 +949,9 @@ export default function Home() {
 
       gsap
         .timeline({ defaults: { ease: "power3.out" } })
-        .to("[data-hero='eyebrow']", { autoAlpha: 1, y: 0, duration: 0.75 })
-        .to("[data-hero='title']", { autoAlpha: 1, y: 0, duration: 0.95 }, "-=0.35")
+        .to("[data-hero='headline-strip']", { autoAlpha: 1, scaleX: 1, duration: 0.65, ease: "power3.out" })
+        .to("[data-hero='eyebrow']", { autoAlpha: 1, y: 0, duration: 0.75 }, "-=0.35")
+        .to("[data-hero='title']", { autoAlpha: 1, y: 0, duration: 0.95 }, "-=0.45")
         .to("[data-hero='lead']", { autoAlpha: 1, y: 0, duration: 0.7 }, "-=0.5")
         .to("[data-hero='actions']", { autoAlpha: 1, y: 0, duration: 0.7 }, "-=0.45")
         .to("[data-hero='stats']", { autoAlpha: 1, y: 0, duration: 0.7 }, "-=0.45")
@@ -1441,18 +1443,36 @@ export default function Home() {
           <div className="container relative py-8 sm:py-10 lg:py-16">
             <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(21rem,0.92fr)] lg:items-center">
               <div className="max-w-3xl" data-hero="content">
-                <div data-hero="eyebrow" className="eyebrow">
+                <div data-hero="headline-strip" className="hero-tricolor-ribbon" aria-hidden="true">
+                  <span />
+                  <span />
+                  <span />
+                </div>
+                <div data-hero="eyebrow" className="eyebrow hero-eyebrow-tricolor">
                   <span className="eyebrow-dot" />
                   Boutique premium · Montería · drop 2026
                 </div>
 
-                <h1 data-hero="title" className="display-title mt-6 max-w-3xl text-[3.1rem] text-white sm:text-[4.6rem] lg:text-[6rem]">
-                  La Tricolor, en modo colección.
+                <h1
+                  data-hero="title"
+                  className="hero-headline-interactive hero-display-title display-title mt-5 max-w-3xl text-[2.85rem] text-white sm:mt-6 sm:text-[4.25rem] lg:text-[5.6rem]"
+                >
+                  <span className="hero-title-line">
+                    <span className="hero-word-blue">La</span> <span className="hero-word-tricolor-core">Tricolor</span>
+                    <span className="hero-title-comma">,</span>
+                  </span>
+                  <span className="hero-title-line mt-1 block sm:mt-0">
+                    <span className="hero-title-sub">en modo </span>
+                    <span className="hero-word-gold">colección</span>
+                    <span className="hero-word-red-dot">.</span>
+                  </span>
                 </h1>
 
-                <p data-hero="lead" className="mt-4 max-w-xl text-sm leading-7 text-white/72 sm:text-base sm:leading-8">
-                  Diseñada para destacar: siluetas player, training y hincha en una compra directa, rápida y sin fricción.
-                </p>
+                <div data-hero="lead" className="hero-lead-panel mt-5 max-w-xl sm:mt-6">
+                  <p className="text-sm leading-7 text-white/78 sm:text-base sm:leading-8">
+                    Diseñada para destacar: siluetas player, training y hincha en una compra directa, rápida y sin fricción.
+                  </p>
+                </div>
 
                 <div data-hero="actions" className="mt-7">
                   <Button
@@ -1467,11 +1487,11 @@ export default function Home() {
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </div>
-                <p className="mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-[oklch(0.86_0.15_85)]/90">
+                <p className="hero-urgency-line mt-3 text-xs font-semibold uppercase tracking-[0.14em]">
                   Drop activo hoy · stock limitado por talla
                 </p>
 
-                <div data-hero="stats" className="mt-7 grid grid-cols-3 gap-2.5 sm:gap-3">
+                <div data-hero="stats" className="hero-metric-grid mt-7 grid grid-cols-3 gap-2.5 sm:gap-3">
                   {HERO_STATS.map((stat) => (
                     <div key={stat.label} className="metric-chip px-3 py-3 sm:px-4 sm:py-4">
                       <p className="text-[0.62rem] font-extrabold uppercase tracking-[0.2em] text-white/42 sm:text-[0.68rem]">{stat.label}</p>
