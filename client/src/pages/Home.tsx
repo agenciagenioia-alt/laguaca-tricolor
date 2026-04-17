@@ -362,20 +362,20 @@ const PRODUCT_COMPARISON = [
   {
     label: "Player",
     fit: "Ajustado pro",
-    ideal: "Partido / colección",
-    price: "Unidad $90.000 · Si sumas 6+ player (cualquier talla), cada una queda en $75.000",
+    ideal: "Acabado más premium y atlético; ideal para quien quiere presencia fuerte, ajuste ceñido y look de colección.",
+    price: "Unidad $90.000",
   },
   {
     label: "Training",
     fit: "Regular técnico",
-    ideal: "Uso diario premium",
+    ideal: "Balance entre comodidad y estética limpia; la opción más versátil para uso diario con lectura premium.",
     price: "Unidad $90.000",
   },
   {
     label: "Hincha",
     fit: "Cómodo urbano",
-    ideal: "Tribuna / calle",
-    price: "Unidad $80.000 · Si sumas 12+ hincha (cualquier talla), cada una queda en $49.000",
+    ideal: "Corte más relajado y urbano; mejor para tribuna, calle y compra por volumen con enfoque de precio.",
+    price: "Unidad $80.000",
   },
 ];
 
@@ -1727,7 +1727,7 @@ export default function Home() {
                 </div>
                 <div data-hero="eyebrow" className="eyebrow hero-eyebrow-tricolor">
                   <span className="eyebrow-dot" />
-                  Boutique premium · Montería · drop 2026
+                  Hecha para la calle, lista para vender.
                 </div>
 
                 <div
@@ -2350,7 +2350,7 @@ export default function Home() {
                   <div data-animate="up">
                     <p className="text-[0.68rem] font-extrabold uppercase tracking-[0.24em] text-[oklch(0.86_0.15_85)]">Precios por volumen</p>
                     <h2 className="display-title mt-3 text-[2.1rem] text-white sm:text-[3rem] lg:text-[4rem]">El precio baja con el volumen.</h2>
-                    <p className="mt-4 max-w-xl text-sm leading-7 text-white/66 sm:text-base">Dos niveles de precio según la versión y la cantidad. Sin pasos extra, sin códigos.</p>
+                    <p className="mt-4 max-w-xl text-sm leading-7 text-white/66 sm:text-base">Para valores mayoristas y disponibilidad real por talla, cotiza directo por WhatsApp.</p>
                     <a
                       href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHOLESALE_WHATSAPP_TEXT)}`}
                       target="_blank"
@@ -2364,7 +2364,6 @@ export default function Home() {
 
                   <div className="tier-grid" data-animate="scale">
                     {WHOLESALE_TIERS.map((tier) => {
-                      const savings = Math.round(((tier.unitPrice - tier.wholesalePrice) / tier.unitPrice) * 100);
                       return (
                         <div
                           key={tier.label}
@@ -2377,19 +2376,13 @@ export default function Home() {
                               className="inline-flex items-center rounded-full px-2.5 py-1 text-[0.58rem] font-black uppercase tracking-wider"
                               style={{ background: tier.accent.replace(")", " / 0.15)"), color: tier.accent }}
                             >
-                              -{savings}%
+                              Cotizar
                             </span>
                           </div>
                           <p className="mt-1.5 text-xs text-white/48">{tier.detail}</p>
                           <div className="mt-4 flex items-end justify-between gap-4">
-                            <div>
-                              <p className="text-[0.6rem] font-bold uppercase tracking-wider text-white/40">Unitario</p>
-                              <p className="mt-0.5 text-sm font-bold text-white/45 line-through">{formatPrice(tier.unitPrice)}</p>
-                            </div>
-                            <div className="text-right">
-                              <p className="text-[0.6rem] font-extrabold uppercase tracking-[0.2em]" style={{ color: tier.accent }}>{tier.min}</p>
-                              <p className="mt-0.5 text-2xl font-black text-white">{formatPrice(tier.wholesalePrice)}</p>
-                            </div>
+                            <p className="text-[0.6rem] font-extrabold uppercase tracking-[0.2em]" style={{ color: tier.accent }}>{tier.min}</p>
+                            <span className="text-sm font-bold text-white/72">Más info por WhatsApp</span>
                           </div>
                         </div>
                       );
