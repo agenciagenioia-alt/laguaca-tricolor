@@ -689,6 +689,7 @@ export default function Home() {
   const heroHeadlineFxRef = useRef<HTMLDivElement | null>(null);
   const heroHeadlinePointerRef = useRef({ rx: 0, ry: 0 });
   const heroHeadlineGyroRef = useRef({ rx: 0, ry: 0 });
+  const heroHeadlineIdleRef = useRef({ rx: 0, ry: 0 });
   const pageGyroRef = useRef({ x: 0, y: 0 });
   const heroGyroGamma0Ref = useRef<number | null>(null);
   const [heroHeadlineGyroEnabled, setHeroHeadlineGyroEnabled] = useState(false);
@@ -754,7 +755,8 @@ export default function Home() {
     if (!el) return;
     const p = heroHeadlinePointerRef.current;
     const g = heroHeadlineGyroRef.current;
-    el.style.transform = `perspective(900px) rotateX(${p.rx + g.rx}deg) rotateY(${p.ry + g.ry}deg)`;
+    const idle = heroHeadlineIdleRef.current;
+    el.style.transform = `perspective(900px) rotateX(${p.rx + g.rx + idle.rx}deg) rotateY(${p.ry + g.ry + idle.ry}deg)`;
   }, []);
 
   const requestMotionAccess = useCallback(async () => {
@@ -1037,6 +1039,26 @@ export default function Home() {
     window.addEventListener("deviceorientation", onOrient, true);
     return () => window.removeEventListener("deviceorientation", onOrient, true);
   }, [heroHeadlineGyroEnabled, applyHeroHeadlineTransform]);
+
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    let raf = 0;
+    const started = performance.now();
+    const tick = (now: number) => {
+      const t = (now - started) / 1000;
+      heroHeadlineIdleRef.current.rx = Math.sin(t * 0.62) * 0.85;
+      heroHeadlineIdleRef.current.ry = Math.cos(t * 0.5) * 1.1;
+      applyHeroHeadlineTransform();
+      raf = window.requestAnimationFrame(tick);
+    };
+    raf = window.requestAnimationFrame(tick);
+    return () => {
+      window.cancelAnimationFrame(raf);
+      heroHeadlineIdleRef.current.rx = 0;
+      heroHeadlineIdleRef.current.ry = 0;
+      applyHeroHeadlineTransform();
+    };
+  }, [applyHeroHeadlineTransform]);
 
   useEffect(() => {
     return () => {
