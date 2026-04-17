@@ -693,7 +693,6 @@ export default function Home() {
   const pageGyroRef = useRef({ x: 0, y: 0 });
   const heroGyroGamma0Ref = useRef<number | null>(null);
   const [heroHeadlineGyroEnabled, setHeroHeadlineGyroEnabled] = useState(false);
-  const [isTouchLike, setIsTouchLike] = useState(false);
 
   const playerCaballero = PRODUCTS.find((product) => product.id === "player-caballero")!;
   const playerDama = PRODUCTS.find((product) => product.id === "player-dama")!;
@@ -759,25 +758,6 @@ export default function Home() {
     el.style.transform = `perspective(900px) rotateX(${p.rx + g.rx + idle.rx}deg) rotateY(${p.ry + g.ry + idle.ry}deg)`;
   }, []);
 
-  const requestMotionAccess = useCallback(async () => {
-    if (heroHeadlineGyroEnabled) return;
-    const DOE = DeviceOrientationEvent as unknown as { requestPermission?: () => Promise<PermissionState> };
-    if (typeof DOE.requestPermission === "function") {
-      try {
-        const state = await DOE.requestPermission();
-        if (state === "granted") {
-          heroGyroGamma0Ref.current = null;
-          setHeroHeadlineGyroEnabled(true);
-        }
-      } catch {
-        /* permiso denegado o no disponible */
-      }
-      return;
-    }
-    heroGyroGamma0Ref.current = null;
-    setHeroHeadlineGyroEnabled(true);
-  }, [heroHeadlineGyroEnabled]);
-
   const handleHeroHeadlinePointerMove = useCallback(
     (e: ReactPointerEvent<HTMLDivElement>) => {
       if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -810,10 +790,6 @@ export default function Home() {
     applyHeroHeadlineTransform();
   }, [applyHeroHeadlineTransform]);
 
-  const handleHeroHeadlinePointerDown = useCallback(async () => {
-    await requestMotionAccess();
-  }, [requestMotionAccess]);
-
   const handleTilt = useCallback((e: ReactMouseEvent<HTMLDivElement>) => {
     const el = e.currentTarget;
     const rect = el.getBoundingClientRect();
@@ -834,14 +810,6 @@ export default function Home() {
     apply();
     media.addEventListener("change", apply);
     return () => media.removeEventListener("change", apply);
-  }, []);
-
-  useEffect(() => {
-    const coarse = window.matchMedia("(pointer: coarse)");
-    const apply = () => setIsTouchLike(coarse.matches || navigator.maxTouchPoints > 0);
-    apply();
-    coarse.addEventListener("change", apply);
-    return () => coarse.removeEventListener("change", apply);
   }, []);
 
   useEffect(() => {
@@ -1046,8 +1014,8 @@ export default function Home() {
     const started = performance.now();
     const tick = (now: number) => {
       const t = (now - started) / 1000;
-      heroHeadlineIdleRef.current.rx = Math.sin(t * 0.62) * 0.85;
-      heroHeadlineIdleRef.current.ry = Math.cos(t * 0.5) * 1.1;
+      heroHeadlineIdleRef.current.rx = Math.sin(t * 0.82) * 1.65;
+      heroHeadlineIdleRef.current.ry = Math.cos(t * 0.64) * 2.35;
       applyHeroHeadlineTransform();
       raf = window.requestAnimationFrame(tick);
     };
@@ -1652,17 +1620,6 @@ export default function Home() {
         <div className="noise-overlay" />
       </div>
       <canvas ref={particlesCanvasRef} className="page-particles-canvas pointer-events-none fixed inset-0 z-[3]" aria-hidden="true" />
-      {isTouchLike && !heroHeadlineGyroEnabled && (
-        <button
-          type="button"
-          className="global-motion-trigger fixed bottom-4 right-4 z-[35] lg:bottom-6 lg:right-6"
-          onClick={() => {
-            void requestMotionAccess();
-          }}
-        >
-          Activar movimiento
-        </button>
-      )}
 
       {/* Mobile nav overlay */}
       {mobileNavOpen && (
@@ -1778,7 +1735,6 @@ export default function Home() {
                   style={{ "--hx": "50%", "--hy": "45%" } as CSSProperties}
                   onPointerMove={handleHeroHeadlinePointerMove}
                   onPointerLeave={handleHeroHeadlinePointerLeave}
-                  onPointerDown={handleHeroHeadlinePointerDown}
                 >
                   <h1
                     data-hero="title"

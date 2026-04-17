@@ -492,27 +492,6 @@
     }
   }
 
-  .global-motion-trigger {
-    border-radius: 999px;
-    border: 1px solid oklch(0.9 0.01 285 / 0.22);
-    background: linear-gradient(135deg, oklch(0.23 0.04 258 / 0.9), oklch(0.13 0.01 255 / 0.94));
-    color: oklch(0.96 0.01 95);
-    padding: 0.66rem 1rem;
-    font-size: 0.67rem;
-    font-weight: 900;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    box-shadow:
-      0 20px 42px oklch(0 0 0 / 0.38),
-      0 0 0 1px oklch(0.9 0.17 92 / 0.2) inset;
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-  }
-
-  .global-motion-trigger:active {
-    transform: scale(0.97);
-  }
-
   .display-title {
     font-family: var(--font-display);
     font-weight: 800;
@@ -669,10 +648,34 @@
       var(--gold-rich) 46%,
       oklch(0.72 0.2 25) 100%
     );
+    background-size: 180% 180%;
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
     filter: drop-shadow(0 3px 28px oklch(0 0 0 / 0.55));
+  }
+
+  @keyframes hero-core-shimmer {
+    0% {
+      background-position: 0% 50%;
+      filter: drop-shadow(0 3px 22px oklch(0.9 0.17 92 / 0.26));
+    }
+
+    50% {
+      background-position: 100% 50%;
+      filter: drop-shadow(0 5px 34px oklch(0.56 0.18 258 / 0.3));
+    }
+
+    100% {
+      background-position: 0% 50%;
+      filter: drop-shadow(0 3px 22px oklch(0.9 0.17 92 / 0.26));
+    }
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .hero-word-tricolor-core {
+      animation: hero-core-shimmer 4.8s ease-in-out infinite;
+    }
   }
 
   @supports not (background-clip: text) {
