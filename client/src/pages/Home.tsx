@@ -109,14 +109,14 @@ const SOLARIS_INSTAGRAM_URL = "https://www.instagram.com/solaris.ia/";
 
 const HERO_IMAGE =
   "https://d2xsxph8kpxj0f.cloudfront.net/310519663548466589/HjT5TMGRubruxMoHSY3yLf/la-guaca-hero-reference-U2Loqi89sFxEsxcefVFjur.webp";
-const PLAYER_IMAGE = "/products/player-front.webp";
+const PLAYER_IMAGE = "/products/player-detail-hero.png";
 const TRAINING_IMAGE = "/products/training-front.webp";
 const FAN_IMAGE =
   "https://d2xsxph8kpxj0f.cloudfront.net/310519663548466589/HjT5TMGRubruxMoHSY3yLf/la-guaca-fan-duo-hhThqd6xYALcd5AE3rWG8W.webp";
 const FABRIC_IMAGE =
   "https://d2xsxph8kpxj0f.cloudfront.net/310519663548466589/HjT5TMGRubruxMoHSY3yLf/la-guaca-fabric-detail-e3sVWKbTbUzTmAyWSXEKhC.webp";
 
-const PLAYER_FRONT = "/products/player-front.webp";
+const PLAYER_FRONT = "/products/player-detail-hero.png";
 const PLAYER_BACK = "/products/player-back.webp";
 const PLAYER_BADGE = "/products/player-badge.webp";
 const PLAYER_STRIPES = "/products/player-stripes.webp";
@@ -573,6 +573,8 @@ function MobileImpulseCard({
   onSizeChange,
   onQuantityChange,
   onAdd,
+  detailLevel,
+  chips,
 }: {
   product: Product;
   selector: { size: string; quantity: number };
@@ -584,11 +586,16 @@ function MobileImpulseCard({
   onSizeChange: (size: string) => void;
   onQuantityChange: (nextQuantity: number) => void;
   onAdd: () => void;
+  detailLevel?: "premium" | "comfort";
+  chips?: string[];
 }) {
   const activeImage = gallery[activeIdx] ?? gallery[0];
   return (
-    <article className="mobile-impulse-card">
+    <article className={`mobile-impulse-card${detailLevel === "premium" ? " mobile-impulse-card--premium" : ""}`}>
       <button type="button" className="mobile-impulse-art" onClick={() => onOpenPreview(activeImage)} aria-label={`Ver ${product.shortName} en grande`}>
+        {detailLevel === "premium" && (
+          <span className="mobile-impulse-detail-badge">Más detalle</span>
+        )}
         <img src={activeImage.src} alt={activeImage.alt} className="h-full w-full object-contain" loading="lazy" />
       </button>
       {gallery.length > 1 && (
@@ -626,6 +633,16 @@ function MobileImpulseCard({
       <p className="mobile-impulse-badge">{product.badge}</p>
       <h3>{product.shortName}</h3>
       <p className="mobile-impulse-price">{formatPrice(product.price)}</p>
+
+      {chips && chips.length > 0 && (
+        <div className="mobile-impulse-chips">
+          {chips.map((chip) => (
+            <span key={chip} className={`mobile-impulse-chip${detailLevel === "premium" ? " mobile-impulse-chip--premium" : ""}`}>
+              {chip}
+            </span>
+          ))}
+        </div>
+      )}
 
       <select
         className="mobile-impulse-size"
@@ -2061,6 +2078,8 @@ export default function Home() {
                       onSizeChange={(size) => updateSelector(playerCaballero.id, { size })}
                       onQuantityChange={(quantity) => updateSelector(playerCaballero.id, { quantity })}
                       onAdd={() => addToCart(playerCaballero)}
+                      detailLevel="premium"
+                      chips={["Escudo bordado FCF", "Textura pro", "Franjas tricolor"]}
                     />
                     <MobileImpulseCard
                       product={trainingWhite}
@@ -2091,6 +2110,8 @@ export default function Home() {
                       onSizeChange={(size) => updateSelector(fanCaballero.id, { size })}
                       onQuantityChange={(quantity) => updateSelector(fanCaballero.id, { quantity })}
                       onAdd={() => addToCart(fanCaballero)}
+                      detailLevel="comfort"
+                      chips={["Corte urbano", "Tela cómoda", "Escudo estándar"]}
                     />
                     <MobileImpulseCard
                       product={fanDama}
