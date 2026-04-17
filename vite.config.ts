@@ -166,6 +166,25 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes("node_modules")) {
+            if (id.includes("gsap")) {
+              return "vendor-gsap";
+            }
+            if (id.includes("lucide-react")) {
+              return "vendor-icons";
+            }
+            if (id.includes("@radix-ui")) {
+              return "vendor-radix";
+            }
+            return "vendor-misc";
+          }
+          return undefined;
+        },
+      },
+    },
   },
   server: {
     port: 3000,

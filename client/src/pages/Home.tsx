@@ -3,7 +3,7 @@
  * Menos texto, más presencia visual, más ritmo editorial y una estructura más apta
  * para móvil. Cada bloque debe sentirse más vivo, táctil y específico de marca.
  */
-import { useCallback, useLayoutEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -15,10 +15,13 @@ import {
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import {
+  ArrowLeft,
   ArrowRight,
   ArrowUpRight,
   CheckCircle2,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Gauge,
   Instagram,
   LocateFixed,
@@ -81,6 +84,11 @@ type CustomerForm = {
   name: string;
   phone: string;
   email: string;
+  deliveryMethod: "envio" | "retiro";
+  city: string;
+  neighborhood: string;
+  address: string;
+  reference: string;
 };
 
 const WHATSAPP_NUMBER = "573206473108";
@@ -90,29 +98,29 @@ const INSTAGRAM_URL = "https://www.instagram.com/boutiquelaguaca1/";
 
 const HERO_IMAGE =
   "https://d2xsxph8kpxj0f.cloudfront.net/310519663548466589/HjT5TMGRubruxMoHSY3yLf/la-guaca-hero-reference-U2Loqi89sFxEsxcefVFjur.webp";
-const PLAYER_IMAGE = "/products/player-front.png";
-const TRAINING_IMAGE = "/products/training-front.png";
+const PLAYER_IMAGE = "/products/player-front.webp";
+const TRAINING_IMAGE = "/products/training-front.webp";
 const FAN_IMAGE =
   "https://d2xsxph8kpxj0f.cloudfront.net/310519663548466589/HjT5TMGRubruxMoHSY3yLf/la-guaca-fan-duo-hhThqd6xYALcd5AE3rWG8W.webp";
 const FABRIC_IMAGE =
   "https://d2xsxph8kpxj0f.cloudfront.net/310519663548466589/HjT5TMGRubruxMoHSY3yLf/la-guaca-fabric-detail-e3sVWKbTbUzTmAyWSXEKhC.webp";
 
-const PLAYER_FRONT = "/products/player-front.png";
-const PLAYER_BACK = "/products/player-back.png";
-const PLAYER_BADGE = "/products/player-badge.png";
-const PLAYER_STRIPES = "/products/player-stripes.png";
+const PLAYER_FRONT = "/products/player-front.webp";
+const PLAYER_BACK = "/products/player-back.webp";
+const PLAYER_BADGE = "/products/player-badge.webp";
+const PLAYER_STRIPES = "/products/player-stripes.webp";
 
-const TRAINING_FRONT = "/products/training-front.png";
-const TRAINING_BACK = "/products/training-back.png";
-const TRAINING_SLEEVE = "/products/training-sleeve.png";
-const TRAINING_BADGE = "/products/training-badge.png";
+const TRAINING_FRONT = "/products/training-front.webp";
+const TRAINING_BACK = "/products/training-back.webp";
+const TRAINING_SLEEVE = "/products/training-sleeve.webp";
+const TRAINING_BADGE = "/products/training-badge.webp";
 
-const FAN_DAMA_FRONT = "/products/fan-dama-front.png";
-const FAN_DAMA_BADGE = "/products/fan-dama-badge.png";
-const FAN_DAMA_SLEEVE = "/products/fan-dama-sleeve.png";
+const FAN_DAMA_FRONT = "/products/fan-dama-front.webp";
+const FAN_DAMA_BADGE = "/products/fan-dama-badge.webp";
+const FAN_DAMA_SLEEVE = "/products/fan-dama-sleeve.webp";
 
-const FAN_CAB_FRONT = "/products/fan-caballero-front.png";
-const FAN_CAB_BADGE = "/products/fan-caballero-badge.png";
+const FAN_CAB_FRONT = "/products/fan-caballero-front.webp";
+const FAN_CAB_BADGE = "/products/fan-caballero-badge.webp";
 
 const PRODUCTS: Product[] = [
   {
@@ -179,9 +187,9 @@ const PRODUCTS: Product[] = [
   },
   {
     id: "fan-caballero",
-    badge: "Versión fan",
-    name: "Camiseta Fan · Caballero",
-    shortName: "Fan Caballero",
+    badge: "Versión hincha",
+    name: "Camiseta Hincha · Caballero",
+    shortName: "Hincha Caballero",
     description: "Más relajada, igual de tricolor.",
     price: 80000,
     wholesalePrice: 49000,
@@ -194,9 +202,9 @@ const PRODUCTS: Product[] = [
   },
   {
     id: "fan-dama",
-    badge: "Versión fan",
-    name: "Camiseta Fan · Dama",
-    shortName: "Fan Dama",
+    badge: "Versión hincha",
+    name: "Camiseta Hincha · Dama",
+    shortName: "Hincha Dama",
     description: "Una versión más liviana y urbana para la tribuna y la calle.",
     price: 80000,
     wholesalePrice: 49000,
@@ -235,12 +243,54 @@ const HERO_SCENES = [
   {
     id: "fan-section",
     label: "Drop 03",
-    title: "Fan",
+    title: "Hincha",
     note: "La más urbana",
     image: FAN_IMAGE,
     accent: "oklch(0.63 0.2 28)",
   },
 ];
+
+const HERO_JERSEY_SLIDES = [
+  {
+    id: "player",
+    label: "Drop 01",
+    title: "Player Local",
+    note: "Caballero",
+    sideLabel: "Boutique edit",
+    sideTitle: "Compra directa",
+    sideNote: "Sin fricción",
+    specs: ["Pro fit", "Tela ligera", "Escudo premium"],
+    front: PLAYER_FRONT,
+    back: PLAYER_BACK,
+    accent: "oklch(0.86 0.15 85)",
+  },
+  {
+    id: "training",
+    label: "Drop 02",
+    title: "Training Blanca",
+    note: "Fría y técnica",
+    sideLabel: "Training edit",
+    sideTitle: "Perfil técnico",
+    sideNote: "Ligera y fresca",
+    specs: ["Cromo blanco", "Textura pro", "Corte técnico"],
+    front: TRAINING_FRONT,
+    back: TRAINING_BACK,
+    accent: "oklch(0.57 0.17 258)",
+  },
+  {
+    id: "fan",
+    label: "Drop 03",
+    title: "Hincha",
+    note: "Caballero / Dama",
+    sideLabel: "Street edit",
+    sideTitle: "Look urbano",
+    sideNote: "Confort premium",
+    specs: ["Fit diario", "Tela suave", "Escudo hincha"],
+    front: FAN_CAB_FRONT,
+    back: null,
+    accent: "oklch(0.63 0.2 28)",
+  },
+] as const;
 
 const STORY_CARDS = [
   {
@@ -257,7 +307,7 @@ const STORY_CARDS = [
   },
   {
     icon: SwatchBook,
-    title: "Fan",
+    title: "Hincha",
     text: "Comodidad premium para tribuna y calle.",
     accent: "oklch(0.63 0.2 28)",
   },
@@ -273,12 +323,48 @@ const WHOLESALE_TIERS = [
     accent: "oklch(0.86 0.15 85)",
   },
   {
-    label: "Fan",
+    label: "Hincha",
     unitPrice: 80000,
     wholesalePrice: 49000,
     detail: "Caballero · Dama",
     min: "12+ uds. → precio mayorista",
     accent: "oklch(0.63 0.2 28)",
+  },
+];
+
+const WHOLESALE_WHATSAPP_TEXT = [
+  "Hola La Guaca, quiero cotizar compra al por mayor.",
+  "",
+  "Datos rápidos:",
+  "- Versión de interés:",
+  "- Cantidad estimada:",
+  "- Ciudad de entrega:",
+].join("\n");
+
+const QUICK_TESTIMONIALS = [
+  { quote: "Me respondieron en minutos y llegó todo perfecto.", author: "Andrea · Montería" },
+  { quote: "Calidad top, tallaje claro y compra sin vueltas.", author: "Luis · Cereté" },
+  { quote: "Para mayorista fue súper rápido cerrar por WhatsApp.", author: "Karen · Sincelejo" },
+];
+
+const PRODUCT_COMPARISON = [
+  {
+    label: "Player",
+    fit: "Ajustado pro",
+    ideal: "Partido / colección",
+    price: "Unidad $90.000 · Si sumas 6+ player (cualquier talla), cada una queda en $75.000",
+  },
+  {
+    label: "Training",
+    fit: "Regular técnico",
+    ideal: "Uso diario premium",
+    price: "Unidad $90.000",
+  },
+  {
+    label: "Hincha",
+    fit: "Cómodo urbano",
+    ideal: "Tribuna / calle",
+    price: "Unidad $80.000 · Si sumas 12+ hincha (cualquier talla), cada una queda en $49.000",
   },
 ];
 
@@ -313,6 +399,7 @@ function ProductConfigurator({
   onSizeChange,
   onQuantityChange,
   onAdd,
+  onOpenSizeGuide,
   compact = false,
 }: {
   product: Product;
@@ -320,6 +407,7 @@ function ProductConfigurator({
   onSizeChange: (size: string) => void;
   onQuantityChange: (nextQuantity: number) => void;
   onAdd: () => void;
+  onOpenSizeGuide: () => void;
   compact?: boolean;
 }) {
   return (
@@ -350,7 +438,12 @@ function ProductConfigurator({
       </div>
 
       <div>
-        <p className="mb-3 text-[0.72rem] font-bold uppercase tracking-[0.22em] text-muted-foreground">Talla</p>
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <p className="text-[0.72rem] font-bold uppercase tracking-[0.22em] text-muted-foreground">Talla</p>
+          <button type="button" className="text-[0.66rem] font-bold uppercase tracking-[0.14em] text-[oklch(0.86_0.15_85)]" onClick={onOpenSizeGuide}>
+            Guía de tallas
+          </button>
+        </div>
         <div className="flex flex-wrap gap-2.5">
           {product.sizes.map((size) => (
             <button
@@ -400,12 +493,14 @@ function CompactVariantCard({
   onSizeChange,
   onQuantityChange,
   onAdd,
+  onOpenSizeGuide,
 }: {
   product: Product;
   selector: { size: string; quantity: number };
   onSizeChange: (size: string) => void;
   onQuantityChange: (nextQuantity: number) => void;
   onAdd: () => void;
+  onOpenSizeGuide: () => void;
 }) {
   return (
     <article
@@ -424,7 +519,13 @@ function CompactVariantCard({
 
       <p className="mt-3 text-sm leading-6 text-muted-foreground">{product.description}</p>
 
-      <div className="mt-4 flex flex-wrap gap-2">
+      <div className="mt-4 flex items-center justify-between gap-3">
+        <p className="text-[0.64rem] font-bold uppercase tracking-[0.14em] text-white/58">Talla</p>
+        <button type="button" className="text-[0.62rem] font-bold uppercase tracking-[0.12em] text-[oklch(0.86_0.15_85)]" onClick={onOpenSizeGuide}>
+          Guía
+        </button>
+      </div>
+      <div className="mt-2 flex flex-wrap gap-2">
         {product.sizes.map((size) => (
           <button key={size} type="button" className="size-pill text-[0.72rem]" data-selected={selector.size === size} onClick={() => onSizeChange(size)}>
             {size}
@@ -450,15 +551,127 @@ function CompactVariantCard({
   );
 }
 
+function MobileImpulseCard({
+  product,
+  selector,
+  gallery,
+  activeIdx,
+  onImageChange,
+  onOpenPreview,
+  onOpenSizeGuide,
+  onSizeChange,
+  onQuantityChange,
+  onAdd,
+}: {
+  product: Product;
+  selector: { size: string; quantity: number };
+  gallery: Array<{ src: string; alt: string }>;
+  activeIdx: number;
+  onImageChange: (next: number) => void;
+  onOpenPreview: (image: { src: string; alt: string }) => void;
+  onOpenSizeGuide: () => void;
+  onSizeChange: (size: string) => void;
+  onQuantityChange: (nextQuantity: number) => void;
+  onAdd: () => void;
+}) {
+  const activeImage = gallery[activeIdx] ?? gallery[0];
+  return (
+    <article className="mobile-impulse-card">
+      <button type="button" className="mobile-impulse-art" onClick={() => onOpenPreview(activeImage)} aria-label={`Ver ${product.shortName} en grande`}>
+        <img src={activeImage.src} alt={activeImage.alt} className="h-full w-full object-contain" loading="lazy" />
+      </button>
+      {gallery.length > 1 && (
+        <div className="mobile-impulse-carousel">
+          <button
+            type="button"
+            className="mobile-impulse-carousel-arrow"
+            aria-label={`Imagen anterior de ${product.shortName}`}
+            onClick={() => onImageChange(activeIdx === 0 ? gallery.length - 1 : activeIdx - 1)}
+          >
+            <ChevronLeft className="h-3 w-3" />
+          </button>
+          <div className="mobile-impulse-carousel-dots">
+            {gallery.map((_, idx) => (
+              <button
+                key={`${product.id}-dot-${idx}`}
+                type="button"
+                className="mobile-impulse-carousel-dot"
+                data-active={idx === activeIdx}
+                aria-label={`Ver imagen ${idx + 1} de ${product.shortName}`}
+                onClick={() => onImageChange(idx)}
+              />
+            ))}
+          </div>
+          <button
+            type="button"
+            className="mobile-impulse-carousel-arrow"
+            aria-label={`Siguiente imagen de ${product.shortName}`}
+            onClick={() => onImageChange((activeIdx + 1) % gallery.length)}
+          >
+            <ChevronRight className="h-3 w-3" />
+          </button>
+        </div>
+      )}
+      <p className="mobile-impulse-badge">{product.badge}</p>
+      <h3>{product.shortName}</h3>
+      <p className="mobile-impulse-price">{formatPrice(product.price)}</p>
+
+      <select
+        className="mobile-impulse-size"
+        value={selector.size}
+        onChange={(event) => onSizeChange(event.target.value)}
+        aria-label={`Seleccionar talla de ${product.shortName}`}
+      >
+        {product.sizes.map((size) => (
+          <option key={size} value={size}>
+            Talla {size}
+          </option>
+        ))}
+      </select>
+      <button type="button" className="mt-1 text-[0.56rem] font-bold uppercase tracking-[0.1em] text-[oklch(0.86_0.15_85)]" onClick={onOpenSizeGuide}>
+        Ver guía de tallas
+      </button>
+
+      <div className="mobile-impulse-actions">
+        <div className="mobile-impulse-qty">
+          <button type="button" onClick={() => onQuantityChange(Math.max(1, selector.quantity - 1))} aria-label={`Disminuir cantidad de ${product.shortName}`}>
+            <Minus className="h-3.5 w-3.5" />
+          </button>
+          <span>{selector.quantity}</span>
+          <button type="button" onClick={() => onQuantityChange(selector.quantity + 1)} aria-label={`Aumentar cantidad de ${product.shortName}`}>
+            <Plus className="h-3.5 w-3.5" />
+          </button>
+        </div>
+        <button type="button" className="mobile-impulse-add" onClick={onAdd}>
+          Añadir
+        </button>
+      </div>
+    </article>
+  );
+}
+
 export default function Home() {
   const rootRef = useRef<HTMLDivElement | null>(null);
   const [selectors, setSelectors] = useState<SelectorState>(() => buildInitialSelectors());
   const [cart, setCart] = useState<CartItem[]>([]);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [confirmationOpen, setConfirmationOpen] = useState(false);
-  const [customer, setCustomer] = useState<CustomerForm>({ name: "", phone: "", email: "" });
+  const [customer, setCustomer] = useState<CustomerForm>({
+    name: "",
+    phone: "",
+    email: "",
+    deliveryMethod: "envio",
+    city: "",
+    neighborhood: "",
+    address: "",
+    reference: "",
+  });
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [loadingPhase, setLoadingPhase] = useState<"gate" | "animating" | "done">("gate");
+  const [heroSlideIdx, setHeroSlideIdx] = useState(0);
+  const [heroBackView, setHeroBackView] = useState<Record<string, boolean>>({});
+  const [heroBackError, setHeroBackError] = useState<Record<string, boolean>>({});
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
   const loadingRef = useRef<HTMLDivElement | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
 
@@ -499,6 +712,23 @@ export default function Home() {
   const [trainingMainIdx, setTrainingMainIdx] = useState(0);
   const [fanCabMainIdx, setFanCabMainIdx] = useState(0);
   const [fanDamaMainIdx, setFanDamaMainIdx] = useState(0);
+  const [mobilePlayerIdx, setMobilePlayerIdx] = useState(0);
+  const [mobileTrainingIdx, setMobileTrainingIdx] = useState(0);
+  const [mobileFanCabIdx, setMobileFanCabIdx] = useState(0);
+  const [mobileFanDamaIdx, setMobileFanDamaIdx] = useState(0);
+  const [imagePreview, setImagePreview] = useState<{ src: string; alt: string } | null>(null);
+  const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
+  const activeHeroSlide = HERO_JERSEY_SLIDES[heroSlideIdx];
+  const activeHeroHasBack = !!activeHeroSlide.back;
+  const activeHeroCanFlip = !!activeHeroSlide.back && !heroBackError[activeHeroSlide.id];
+  const activeHeroIsBack = !!heroBackView[activeHeroSlide.id] && activeHeroCanFlip;
+
+  const trackEvent = useCallback((event: string, data?: Record<string, unknown>) => {
+    const maybeUmami = (window as unknown as { umami?: { track?: (name: string, payload?: Record<string, unknown>) => void } }).umami;
+    if (typeof maybeUmami?.track === "function") {
+      maybeUmami.track(event, data);
+    }
+  }, []);
 
   const handleTilt = useCallback((e: ReactMouseEvent<HTMLDivElement>) => {
     const el = e.currentTarget;
@@ -514,6 +744,27 @@ export default function Home() {
     e.currentTarget.style.transform = "perspective(800px) rotateX(0deg) rotateY(0deg) scale3d(1,1,1)";
   }, []);
 
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 1023px)");
+    const apply = () => setIsMobileViewport(media.matches);
+    apply();
+    media.addEventListener("change", apply);
+    return () => media.removeEventListener("change", apply);
+  }, []);
+
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 1023px)");
+    if (media.matches) return;
+    const timer = window.setInterval(() => {
+      setHeroSlideIdx((current) => (current + 1) % HERO_JERSEY_SLIDES.length);
+    }, 5200);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    setHeroBackView((current) => ({ ...current, [activeHeroSlide.id]: false }));
+  }, [heroSlideIdx]);
+
   const totals = useMemo(() => {
     const units = cart.reduce((acc, item) => acc + item.quantity, 0);
     const subtotal = cart.reduce((acc, item) => acc + item.quantity * item.unitPrice, 0);
@@ -528,11 +779,23 @@ export default function Home() {
     const phoneRegex = /^(\+57|57|0)?\s?3\d{2}\s?\d{3}\s?\d{4}$/;
     const phone = phoneRegex.test(customer.phone.trim()) ? "" : "Ingresa un celular colombiano válido.";
     const email = customer.email.trim() === "" || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customer.email.trim()) ? "" : "Escribe un correo válido o déjalo vacío.";
+    const city = customer.city.trim().length >= 2 ? "" : "Escribe la ciudad de entrega.";
+    const neighborhood = customer.neighborhood.trim().length >= 2 ? "" : "Escribe el barrio/zona.";
+    const address = customer.deliveryMethod === "envio" && customer.address.trim().length < 6 ? "Escribe una dirección completa." : "";
+    const reference = customer.deliveryMethod === "envio" && customer.reference.trim().length < 4 ? "Agrega una referencia para ubicar mejor." : "";
 
-    return { name, phone, email };
+    return { name, phone, email, city, neighborhood, address, reference };
   }, [customer]);
 
-  const isCheckoutValid = cart.length > 0 && !customerErrors.name && !customerErrors.phone && !customerErrors.email;
+  const isCheckoutValid =
+    cart.length > 0 &&
+    !customerErrors.name &&
+    !customerErrors.phone &&
+    !customerErrors.email &&
+    !customerErrors.city &&
+    !customerErrors.neighborhood &&
+    !customerErrors.address &&
+    !customerErrors.reference;
 
   const whatsappMessage = useMemo(() => {
     const productLines = cart.map((item) => {
@@ -543,22 +806,30 @@ export default function Home() {
     });
 
     const lines = [
-      "Pedido de La Guaca - Selección Colombia 2026",
+      "PEDIDO LA GUACA | SELECCION COLOMBIA 2026",
       "",
-      "PRODUCTOS:",
-      ...productLines,
+      "================= TABLA PEDIDO =================",
+      ...productLines.map((line, idx) => `${idx + 1}. ${line}`),
+      "================================================",
       "",
-      "RESUMEN:",
-      `Subtotal (sin descuento): ${formatPrice(totals.subtotal)}`,
-      totals.discount > 0 ? `Ahorro mayorista: -${formatPrice(totals.discount)}` : "",
-      `Total: ${formatPrice(totals.total)}`,
+      "RESUMEN COMERCIAL",
+      `- Subtotal: ${formatPrice(totals.subtotal)}`,
+      totals.discount > 0 ? `- Descuento mayorista: -${formatPrice(totals.discount)}` : "",
+      `- Total final: ${formatPrice(totals.total)}`,
       "",
-      "CLIENTE:",
-      `Nombre: ${customer.name.trim()}`,
-      `Teléfono: ${customer.phone.trim()}`,
-      customer.email.trim() ? `Correo: ${customer.email.trim()}` : "Correo: No suministrado",
+      "DATOS DE ENVIO",
+      `- Metodo: ${customer.deliveryMethod === "envio" ? "Envio a domicilio" : "Retiro en tienda"}`,
+      `- Ciudad: ${customer.city.trim()}`,
+      `- Barrio/Zona: ${customer.neighborhood.trim()}`,
+      customer.deliveryMethod === "envio" ? `- Direccion: ${customer.address.trim()}` : "- Direccion: Retiro en boutique",
+      customer.deliveryMethod === "envio" ? `- Referencia: ${customer.reference.trim()}` : "- Referencia: N/A",
       "",
-      "Quedo atento a la confirmación del pedido.",
+      "DATOS DEL CLIENTE",
+      `- Nombre: ${customer.name.trim()}`,
+      `- Celular: ${customer.phone.trim()}`,
+      customer.email.trim() ? `- Correo: ${customer.email.trim()}` : "- Correo: No suministrado",
+      "",
+      "Pendiente por confirmar: medio de pago y validacion final.",
     ].filter(Boolean);
 
     return lines.join("\n");
@@ -606,6 +877,13 @@ export default function Home() {
       pill.classList.add("cart-pulse");
       setTimeout(() => pill.classList.remove("cart-pulse"), 600);
     }
+
+    trackEvent("add_to_cart", {
+      product: product.id,
+      size: selected.size,
+      quantity: selected.quantity,
+      channel: "landing",
+    });
   };
 
   const removeCartItem = (id: string) => {
@@ -619,17 +897,36 @@ export default function Home() {
 
     const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(whatsappMessage)}`;
     window.open(whatsappUrl, "_blank", "noopener,noreferrer");
+    trackEvent("send_whatsapp_order", {
+      units: totals.units,
+      total: totals.total,
+      deliveryMethod: customer.deliveryMethod,
+      hasWholesale: totals.discount > 0,
+    });
 
     setCheckoutOpen(false);
     setConfirmationOpen(true);
     setCart([]);
-    setCustomer({ name: "", phone: "", email: "" });
+    setCustomer({
+      name: "",
+      phone: "",
+      email: "",
+      deliveryMethod: "envio",
+      city: "",
+      neighborhood: "",
+      address: "",
+      reference: "",
+    });
   };
 
   useLayoutEffect(() => {
     if (!rootRef.current) return;
 
     const ctx = gsap.context(() => {
+      const isMobileViewport = window.matchMedia("(max-width: 1023px)").matches;
+      const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const lowPerfMode = isMobileViewport || prefersReducedMotion;
+
       const applyTheme = (start: string, end: string, glow: string) => {
         gsap.to(document.documentElement, {
           "--page-bg-start": start,
@@ -671,56 +968,58 @@ export default function Home() {
         },
       });
 
-      gsap.to("[data-stage-main]", {
-        yPercent: -22,
-        rotation: 2.5,
-        scale: 1.07,
-        ease: "none",
-        scrollTrigger: {
-          trigger: "[data-hero='section']",
-          start: "top top",
-          end: "bottom top",
-          scrub: 1.8,
-        },
-      });
-
-      gsap.to(".hero-stage-glow", {
-        scale: 2.6,
-        opacity: 0.72,
-        ease: "none",
-        scrollTrigger: {
-          trigger: "[data-hero='section']",
-          start: "top top",
-          end: "bottom top",
-          scrub: 2.4,
-        },
-      });
-
-      gsap.utils.toArray<HTMLElement>(".spotlight-ring").forEach((ring, i) => {
-        gsap.to(ring, {
-          y: i === 0 ? 90 : -60,
-          x: i === 0 ? -50 : 40,
-          scale: 1.5,
-          opacity: 0.42,
+      if (!lowPerfMode) {
+        gsap.to("[data-stage-main]", {
+          yPercent: -22,
+          rotation: 2.5,
+          scale: 1.07,
           ease: "none",
           scrollTrigger: {
             trigger: "[data-hero='section']",
             start: "top top",
             end: "bottom top",
-            scrub: 2.8 + i * 0.4,
+            scrub: 1.8,
           },
         });
-      });
 
-      gsap.utils.toArray<HTMLElement>("[data-card-float]").forEach((card, index) => {
-        gsap.to(card, {
-          y: index % 2 === 0 ? -10 : 10,
-          duration: 2.8 + index * 0.2,
-          repeat: -1,
-          yoyo: true,
-          ease: "sine.inOut",
+        gsap.to(".hero-stage-glow", {
+          scale: 2.6,
+          opacity: 0.72,
+          ease: "none",
+          scrollTrigger: {
+            trigger: "[data-hero='section']",
+            start: "top top",
+            end: "bottom top",
+            scrub: 2.4,
+          },
         });
-      });
+
+        gsap.utils.toArray<HTMLElement>(".spotlight-ring").forEach((ring, i) => {
+          gsap.to(ring, {
+            y: i === 0 ? 90 : -60,
+            x: i === 0 ? -50 : 40,
+            scale: 1.5,
+            opacity: 0.42,
+            ease: "none",
+            scrollTrigger: {
+              trigger: "[data-hero='section']",
+              start: "top top",
+              end: "bottom top",
+              scrub: 2.8 + i * 0.4,
+            },
+          });
+        });
+
+        gsap.utils.toArray<HTMLElement>("[data-card-float]").forEach((card, index) => {
+          gsap.to(card, {
+            y: index % 2 === 0 ? -10 : 10,
+            duration: 2.8 + index * 0.2,
+            repeat: -1,
+            yoyo: true,
+            ease: "sine.inOut",
+          });
+        });
+      }
 
       gsap.utils.toArray<HTMLElement>("[data-animate]").forEach((element) => {
         const direction = element.dataset.animate ?? "up";
@@ -750,26 +1049,28 @@ export default function Home() {
         );
       });
 
-      gsap.utils.toArray<HTMLElement>("[data-sticky-product]").forEach((section) => {
-        const image = section.querySelector<HTMLElement>("[data-product-image]");
-        if (!image) return;
+      if (!lowPerfMode) {
+        gsap.utils.toArray<HTMLElement>("[data-sticky-product]").forEach((section) => {
+          const image = section.querySelector<HTMLElement>("[data-product-image]");
+          if (!image) return;
 
-        gsap.fromTo(
-          image,
-          { y: 18, scale: 0.96 },
-          {
-            y: -20,
-            scale: 1.02,
-            ease: "none",
-            scrollTrigger: {
-              trigger: section,
-              start: "top bottom",
-              end: "bottom top",
-              scrub: true,
+          gsap.fromTo(
+            image,
+            { y: 18, scale: 0.96 },
+            {
+              y: -20,
+              scale: 1.02,
+              ease: "none",
+              scrollTrigger: {
+                trigger: section,
+                start: "top bottom",
+                end: "bottom top",
+                scrub: true,
+              },
             },
-          },
-        );
-      });
+          );
+        });
+      }
 
       gsap.utils.toArray<HTMLElement>("[data-theme-section]").forEach((section) => {
         const start = section.dataset.bgStart;
@@ -1073,12 +1374,6 @@ export default function Home() {
                 </button>
               ))}
             </div>
-            <div className="mt-5 border-t border-white/8 pt-5">
-              <a href={`https://wa.me/${WHATSAPP_NUMBER}`} target="_blank" rel="noopener noreferrer" className="chrome-button flex h-12 w-full items-center justify-center gap-2 font-extrabold uppercase tracking-[0.14em]">
-                <MessageCircle className="h-4 w-4" />
-                WhatsApp directo
-              </a>
-            </div>
           </nav>
         </div>
       )}
@@ -1105,7 +1400,10 @@ export default function Home() {
             <button
               type="button"
               className="header-cart-pill"
-              onClick={() => (cart.length > 0 ? setCheckoutOpen(true) : scrollToId("carrito"))}
+              onClick={() => {
+                trackEvent("click_header_cart");
+                cart.length > 0 ? setCheckoutOpen(true) : scrollToId("carrito");
+              }}
             >
               <ShoppingCart className="h-4 w-4" />
               <span>{cart.length > 0 ? `${totals.units}` : "Carrito"}</span>
@@ -1153,18 +1451,34 @@ export default function Home() {
                 </h1>
 
                 <p data-hero="lead" className="mt-4 max-w-xl text-sm leading-7 text-white/72 sm:text-base sm:leading-8">
-                  Menos catálogo genérico, más drop boutique: player, training y fan en una sola experiencia de compra directa.
+                  Diseñada para destacar: siluetas player, training y hincha en una compra directa, rápida y sin fricción.
                 </p>
 
                 <div data-hero="actions" className="mt-7 flex flex-col gap-3 sm:flex-row">
-                  <Button type="button" className="chrome-button h-13 px-6 text-sm font-extrabold uppercase tracking-[0.16em]" onClick={() => scrollToId("coleccion")}>
+                  <Button
+                    type="button"
+                    className="chrome-button h-13 px-6 text-sm font-extrabold uppercase tracking-[0.16em]"
+                    onClick={() => {
+                      trackEvent("click_cta_hero_collection");
+                      scrollToId("coleccion");
+                    }}
+                  >
                     Ver colección
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
-                  <a href={`https://wa.me/${WHATSAPP_NUMBER}`} target="_blank" rel="noopener noreferrer" className="ghost-button inline-flex h-13 items-center justify-center px-6 text-sm font-bold uppercase tracking-[0.16em]">
+                  <a
+                    href={`https://wa.me/${WHATSAPP_NUMBER}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="ghost-button inline-flex h-13 items-center justify-center px-6 text-sm font-bold uppercase tracking-[0.16em]"
+                    onClick={() => trackEvent("click_cta_hero_whatsapp")}
+                  >
                     WhatsApp directo
                   </a>
                 </div>
+                <p className="mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-[oklch(0.86_0.15_85)]/90">
+                  Drop activo hoy · stock limitado por talla
+                </p>
 
                 <div data-hero="stats" className="mt-7 grid grid-cols-3 gap-2.5 sm:gap-3">
                   {HERO_STATS.map((stat) => (
@@ -1179,26 +1493,105 @@ export default function Home() {
               <div data-hero="stage" className="hero-stage">
                 <div className="hero-stage-grid">
                   <div className="hero-plaque hero-plaque-top" data-card-float>
-                    <span className="hero-plaque-label">Drop 01</span>
-                    <strong>Player Local</strong>
-                    <small>Caballero</small>
+                    <span className="hero-plaque-label">{activeHeroSlide.label}</span>
+                    <strong>{activeHeroSlide.title}</strong>
+                    <small>{activeHeroSlide.note}</small>
                   </div>
 
                   <div className="hero-stage-main">
                     <div className="hero-stage-glow" />
-                    <img data-stage-main src={PLAYER_IMAGE} alt="Player Caballero de La Guaca" className="hero-stage-image" loading="eager" />
+                    <div className="hero-carousel-shell" data-stage-main>
+                      {isMobileViewport ? (
+                        <img
+                          key={`${activeHeroSlide.id}-${activeHeroIsBack ? "back" : "front"}-mobile`}
+                          src={activeHeroIsBack && activeHeroSlide.back ? activeHeroSlide.back : activeHeroSlide.front}
+                          alt={`${activeHeroSlide.label} ${activeHeroIsBack ? "vista trasera" : "vista frontal"}`}
+                          className="hero-stage-image"
+                          loading="eager"
+                          onError={() => setHeroBackError((current) => ({ ...current, [activeHeroSlide.id]: true }))}
+                        />
+                      ) : (
+                        <div className={`hero-carousel-flip ${activeHeroIsBack ? "is-back" : ""}`}>
+                          <div className="hero-carousel-face hero-carousel-face--front">
+                            <img
+                              key={`${activeHeroSlide.id}-front`}
+                              src={activeHeroSlide.front}
+                              alt={`${activeHeroSlide.label} vista frontal`}
+                              className="hero-stage-image"
+                              loading="eager"
+                            />
+                          </div>
+                          <div className="hero-carousel-face hero-carousel-face--back">
+                            <img
+                              key={`${activeHeroSlide.id}-back`}
+                              src={activeHeroSlide.back ?? activeHeroSlide.front}
+                              alt={`${activeHeroSlide.label} vista trasera`}
+                              className="hero-stage-image"
+                              loading="eager"
+                              onError={() => setHeroBackError((current) => ({ ...current, [activeHeroSlide.id]: true }))}
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <div className="hero-carousel-ui">
+                      <button
+                        type="button"
+                        className="hero-carousel-arrow"
+                        aria-label="Camiseta anterior"
+                        onClick={() =>
+                          setHeroSlideIdx((current) =>
+                            current === 0 ? HERO_JERSEY_SLIDES.length - 1 : current - 1,
+                          )
+                        }
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </button>
+                      <div className="hero-carousel-dots">
+                        {HERO_JERSEY_SLIDES.map((slide, idx) => (
+                          <button
+                            key={slide.id}
+                            type="button"
+                            aria-label={`Mostrar ${slide.label}`}
+                            className="hero-carousel-dot"
+                            data-active={idx === heroSlideIdx}
+                            style={{ ["--dot-accent" as string]: slide.accent }}
+                            onClick={() => setHeroSlideIdx(idx)}
+                          />
+                        ))}
+                      </div>
+                      <button
+                        type="button"
+                        className="hero-carousel-arrow"
+                        aria-label="Siguiente camiseta"
+                        onClick={() => setHeroSlideIdx((current) => (current + 1) % HERO_JERSEY_SLIDES.length)}
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </button>
+                    </div>
+                    <button
+                      type="button"
+                      className="hero-flip-trigger"
+                      onClick={() =>
+                        activeHeroCanFlip &&
+                        setHeroBackView((current) => ({ ...current, [activeHeroSlide.id]: !current[activeHeroSlide.id] }))
+                      }
+                      disabled={!activeHeroCanFlip}
+                    >
+                      {!activeHeroHasBack ? "Vista unica" : activeHeroCanFlip ? (activeHeroIsBack ? "Ver frente" : "Ver espalda") : "Vista no disponible"}
+                    </button>
                   </div>
 
                   <div className="hero-plaque hero-plaque-side" data-card-float>
-                    <span className="hero-plaque-label">Boutique edit</span>
-                    <strong>Compra directa</strong>
-                    <small>Sin fricción</small>
+                    <span className="hero-plaque-label">{activeHeroSlide.sideLabel}</span>
+                    <strong>{activeHeroSlide.sideTitle}</strong>
+                    <small>{activeHeroSlide.sideNote}</small>
                   </div>
 
                   <div className="hero-specs" data-card-float>
-                    <span className="hero-spec">Pro fit</span>
-                    <span className="hero-spec">Tela ligera</span>
-                    <span className="hero-spec">Escudo premium</span>
+                    {activeHeroSlide.specs.map((spec) => (
+                      <span key={spec} className="hero-spec">{spec}</span>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -1229,7 +1622,7 @@ export default function Home() {
         </section>
 
         {/* ── Social proof strip ─────────────────────────────────────────── */}
-        <div className="container py-4" data-animate="up">
+        <div className="container hidden py-4 lg:block" data-animate="up">
           <div className="social-proof-strip">
             <div className="social-proof-item">
               <span className="social-proof-number">+280</span>
@@ -1254,7 +1647,7 @@ export default function Home() {
         </div>
 
         {/* ── Stadium Experience ────────────────────────────────────────────── */}
-        <div className="container py-6 lg:py-10">
+        <div className="container hidden py-6 lg:py-10 lg:block">
           <div className="stadium-experience section-shell relative overflow-hidden rounded-[2rem] border border-white/[0.08]">
             {/* Floodlight beams */}
             <div className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -1315,7 +1708,7 @@ export default function Home() {
           </div>
         </div>
 
-        <section id="coleccion" className="container pt-8 lg:pt-14" data-theme-section data-bg-start="oklch(0.17 0.01 255)" data-bg-end="oklch(0.095 0.012 255)" data-bg-glow="oklch(0.57 0.17 258 / 0.12)">
+        <section id="coleccion-desktop" className="container hidden pt-8 lg:block lg:pt-14" data-theme-section data-bg-start="oklch(0.17 0.01 255)" data-bg-end="oklch(0.095 0.012 255)" data-bg-glow="oklch(0.57 0.17 258 / 0.12)">
           <div data-animate="up" className="section-shell px-4 py-5 sm:px-6 sm:py-7 lg:px-10 lg:py-9">
             <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
               <div className="max-w-2xl">
@@ -1343,8 +1736,8 @@ export default function Home() {
             </div>
 
             <div className="mt-6 grid gap-4 lg:grid-cols-2">
-              <CompactVariantCard product={playerDama} selector={selectors[playerDama.id]} onSizeChange={(size) => updateSelector(playerDama.id, { size })} onQuantityChange={(quantity) => updateSelector(playerDama.id, { quantity })} onAdd={() => addToCart(playerDama)} />
-              <CompactVariantCard product={playerNino} selector={selectors[playerNino.id]} onSizeChange={(size) => updateSelector(playerNino.id, { size })} onQuantityChange={(quantity) => updateSelector(playerNino.id, { quantity })} onAdd={() => addToCart(playerNino)} />
+              <CompactVariantCard product={playerDama} selector={selectors[playerDama.id]} onSizeChange={(size) => updateSelector(playerDama.id, { size })} onQuantityChange={(quantity) => updateSelector(playerDama.id, { quantity })} onAdd={() => addToCart(playerDama)} onOpenSizeGuide={() => setSizeGuideOpen(true)} />
+              <CompactVariantCard product={playerNino} selector={selectors[playerNino.id]} onSizeChange={(size) => updateSelector(playerNino.id, { size })} onQuantityChange={(quantity) => updateSelector(playerNino.id, { quantity })} onAdd={() => addToCart(playerNino)} onOpenSizeGuide={() => setSizeGuideOpen(true)} />
             </div>
           </div>
         </section>
@@ -1352,7 +1745,74 @@ export default function Home() {
         <section className="container py-8 lg:py-12">
           <div className="section-grid gap-8 lg:gap-10">
             <div className="space-y-6 lg:space-y-8">
-              <article id="player-section" className="section-shell p-4 sm:p-6 lg:p-10" data-sticky-product data-theme-section data-bg-start="oklch(0.16 0.01 255)" data-bg-end="oklch(0.09 0.012 255)" data-bg-glow="oklch(0.86 0.15 85 / 0.16)">
+              <section id="coleccion" className="mobile-impulse-shell section-shell p-3 lg:hidden">
+                <div className="mb-3">
+                  <p className="text-[0.62rem] font-extrabold uppercase tracking-[0.22em] text-[oklch(0.86_0.15_85)]">Compra rápida</p>
+                  <h2 className="mt-1 text-xl font-black text-white">Elige y agrega en segundos</h2>
+                </div>
+
+                <div className="mobile-impulse-group">
+                  <p className="mobile-impulse-group-title">Player + Training</p>
+                  <div className="mobile-impulse-grid">
+                    <MobileImpulseCard
+                      product={playerCaballero}
+                      selector={selectors[playerCaballero.id]}
+                      gallery={PLAYER_GALLERY.map((item) => ({ src: item.src, alt: item.alt }))}
+                      activeIdx={mobilePlayerIdx}
+                      onImageChange={setMobilePlayerIdx}
+                      onOpenPreview={setImagePreview}
+                      onOpenSizeGuide={() => setSizeGuideOpen(true)}
+                      onSizeChange={(size) => updateSelector(playerCaballero.id, { size })}
+                      onQuantityChange={(quantity) => updateSelector(playerCaballero.id, { quantity })}
+                      onAdd={() => addToCart(playerCaballero)}
+                    />
+                    <MobileImpulseCard
+                      product={trainingWhite}
+                      selector={selectors[trainingWhite.id]}
+                      gallery={TRAINING_GALLERY.map((item) => ({ src: item.src, alt: item.alt }))}
+                      activeIdx={mobileTrainingIdx}
+                      onImageChange={setMobileTrainingIdx}
+                      onOpenPreview={setImagePreview}
+                      onOpenSizeGuide={() => setSizeGuideOpen(true)}
+                      onSizeChange={(size) => updateSelector(trainingWhite.id, { size })}
+                      onQuantityChange={(quantity) => updateSelector(trainingWhite.id, { quantity })}
+                      onAdd={() => addToCart(trainingWhite)}
+                    />
+                  </div>
+                </div>
+
+                <div className="mobile-impulse-group">
+                  <p className="mobile-impulse-group-title">Hincha + Hincha</p>
+                  <div className="mobile-impulse-grid">
+                    <MobileImpulseCard
+                      product={fanCaballero}
+                      selector={selectors[fanCaballero.id]}
+                      gallery={FAN_CAB_GALLERY.map((item) => ({ src: item.src, alt: item.alt }))}
+                      activeIdx={mobileFanCabIdx}
+                      onImageChange={setMobileFanCabIdx}
+                      onOpenPreview={setImagePreview}
+                      onOpenSizeGuide={() => setSizeGuideOpen(true)}
+                      onSizeChange={(size) => updateSelector(fanCaballero.id, { size })}
+                      onQuantityChange={(quantity) => updateSelector(fanCaballero.id, { quantity })}
+                      onAdd={() => addToCart(fanCaballero)}
+                    />
+                    <MobileImpulseCard
+                      product={fanDama}
+                      selector={selectors[fanDama.id]}
+                      gallery={FAN_DAMA_GALLERY.map((item) => ({ src: item.src, alt: item.alt }))}
+                      activeIdx={mobileFanDamaIdx}
+                      onImageChange={setMobileFanDamaIdx}
+                      onOpenPreview={setImagePreview}
+                      onOpenSizeGuide={() => setSizeGuideOpen(true)}
+                      onSizeChange={(size) => updateSelector(fanDama.id, { size })}
+                      onQuantityChange={(quantity) => updateSelector(fanDama.id, { quantity })}
+                      onAdd={() => addToCart(fanDama)}
+                    />
+                  </div>
+                </div>
+              </section>
+
+              <article id="player-section" className="section-shell hidden p-4 sm:p-6 lg:block lg:p-10" data-sticky-product data-theme-section data-bg-start="oklch(0.16 0.01 255)" data-bg-end="oklch(0.09 0.012 255)" data-bg-glow="oklch(0.86 0.15 85 / 0.16)">
                 <div className="grid gap-6 lg:grid-cols-[minmax(0,0.88fr)_minmax(0,1.12fr)] lg:items-center lg:gap-8">
                   <div className="space-y-3">
                     <div
@@ -1420,19 +1880,19 @@ export default function Home() {
                       </div>
                     </div>
 
-                    <ProductConfigurator product={playerCaballero} selector={selectors[playerCaballero.id]} onSizeChange={(size) => updateSelector(playerCaballero.id, { size })} onQuantityChange={(quantity) => updateSelector(playerCaballero.id, { quantity })} onAdd={() => addToCart(playerCaballero)} />
+                    <ProductConfigurator product={playerCaballero} selector={selectors[playerCaballero.id]} onSizeChange={(size) => updateSelector(playerCaballero.id, { size })} onQuantityChange={(quantity) => updateSelector(playerCaballero.id, { quantity })} onAdd={() => addToCart(playerCaballero)} onOpenSizeGuide={() => setSizeGuideOpen(true)} />
                   </div>
                 </div>
               </article>
 
               {/* Drop interlude */}
-              <div className="drop-interlude" data-animate="up">
+              <div className="drop-interlude hidden lg:block" data-animate="up">
                 <span className="drop-interlude-label">Drop 02</span>
                 <h2 className="drop-interlude-title">Training</h2>
                 <p className="drop-interlude-sub">Un cambio de temperatura. Más limpio, más frío, más técnico.</p>
               </div>
 
-              <article id="training-section" className="section-shell p-4 sm:p-6 lg:p-10" data-sticky-product data-theme-section data-bg-start="oklch(0.18 0.015 255)" data-bg-end="oklch(0.11 0.018 250)" data-bg-glow="oklch(0.57 0.17 258 / 0.16)">
+              <article id="training-section" className="section-shell hidden p-4 sm:p-6 lg:block lg:p-10" data-sticky-product data-theme-section data-bg-start="oklch(0.18 0.015 255)" data-bg-end="oklch(0.11 0.018 250)" data-bg-glow="oklch(0.57 0.17 258 / 0.16)">
                 <div className="grid gap-6 lg:grid-cols-[minmax(0,1.04fr)_minmax(0,0.96fr)] lg:items-center lg:gap-8">
                   <div className="space-y-5 lg:order-1">
                     <div data-animate="left">
@@ -1471,7 +1931,7 @@ export default function Home() {
                       </div>
                     </div>
 
-                    <ProductConfigurator product={trainingWhite} selector={selectors[trainingWhite.id]} onSizeChange={(size) => updateSelector(trainingWhite.id, { size })} onQuantityChange={(quantity) => updateSelector(trainingWhite.id, { quantity })} onAdd={() => addToCart(trainingWhite)} />
+                    <ProductConfigurator product={trainingWhite} selector={selectors[trainingWhite.id]} onSizeChange={(size) => updateSelector(trainingWhite.id, { size })} onQuantityChange={(quantity) => updateSelector(trainingWhite.id, { quantity })} onAdd={() => addToCart(trainingWhite)} onOpenSizeGuide={() => setSizeGuideOpen(true)} />
                   </div>
 
                   <div className="space-y-3 lg:order-2">
@@ -1506,15 +1966,15 @@ export default function Home() {
               </article>
 
               {/* Drop interlude */}
-              <div className="drop-interlude" data-animate="up" style={{ "--interlude-accent": "oklch(0.63 0.2 28)" } as React.CSSProperties}>
+              <div className="drop-interlude hidden lg:block" data-animate="up" style={{ "--interlude-accent": "oklch(0.63 0.2 28)" } as React.CSSProperties}>
                 <span className="drop-interlude-label" style={{ color: "oklch(0.63 0.2 28)" }}>Drop 03</span>
-                <h2 className="drop-interlude-title">Fan</h2>
+                <h2 className="drop-interlude-title">Hincha</h2>
                 <p className="drop-interlude-sub">La versión más urbana del drop. Para la tribuna y la calle.</p>
               </div>
 
-              <article id="fan-section" className="section-shell overflow-hidden p-4 sm:p-6 lg:p-10" data-sticky-product data-theme-section data-bg-start="oklch(0.17 0.012 255)" data-bg-end="oklch(0.095 0.012 255)" data-bg-glow="oklch(0.63 0.2 28 / 0.16)">
+              <article id="fan-section" className="section-shell hidden overflow-hidden p-4 sm:p-6 lg:block lg:p-10" data-sticky-product data-theme-section data-bg-start="oklch(0.17 0.012 255)" data-bg-end="oklch(0.095 0.012 255)" data-bg-glow="oklch(0.63 0.2 28 / 0.16)">
                 <div className="mb-8" data-animate="up">
-                  <p className="text-[0.68rem] font-extrabold uppercase tracking-[0.24em] text-[oklch(0.63_0.2_28)]">Drop 03 · fan</p>
+                  <p className="text-[0.68rem] font-extrabold uppercase tracking-[0.24em] text-[oklch(0.63_0.2_28)]">Drop 03 · hincha</p>
                   <h2 className="display-title mt-3 text-[2.2rem] text-white sm:text-[3rem] lg:text-[4rem]">La calle también juega.</h2>
                   <p className="mt-4 max-w-xl text-sm leading-7 text-white/66 sm:text-base">La versión más cómoda del drop, con energía urbana y lectura premium.</p>
                 </div>
@@ -1548,7 +2008,7 @@ export default function Home() {
                         </button>
                       ))}
                     </div>
-                    <CompactVariantCard product={fanCaballero} selector={selectors[fanCaballero.id]} onSizeChange={(size) => updateSelector(fanCaballero.id, { size })} onQuantityChange={(quantity) => updateSelector(fanCaballero.id, { quantity })} onAdd={() => addToCart(fanCaballero)} />
+                    <CompactVariantCard product={fanCaballero} selector={selectors[fanCaballero.id]} onSizeChange={(size) => updateSelector(fanCaballero.id, { size })} onQuantityChange={(quantity) => updateSelector(fanCaballero.id, { quantity })} onAdd={() => addToCart(fanCaballero)} onOpenSizeGuide={() => setSizeGuideOpen(true)} />
                   </div>
 
                   {/* Fan Dama */}
@@ -1579,7 +2039,7 @@ export default function Home() {
                         </button>
                       ))}
                     </div>
-                    <CompactVariantCard product={fanDama} selector={selectors[fanDama.id]} onSizeChange={(size) => updateSelector(fanDama.id, { size })} onQuantityChange={(quantity) => updateSelector(fanDama.id, { quantity })} onAdd={() => addToCart(fanDama)} />
+                    <CompactVariantCard product={fanDama} selector={selectors[fanDama.id]} onSizeChange={(size) => updateSelector(fanDama.id, { size })} onQuantityChange={(quantity) => updateSelector(fanDama.id, { quantity })} onAdd={() => addToCart(fanDama)} onOpenSizeGuide={() => setSizeGuideOpen(true)} />
                   </div>
                 </div>
               </article>
@@ -1594,7 +2054,16 @@ export default function Home() {
                   <div data-animate="up">
                     <p className="text-[0.68rem] font-extrabold uppercase tracking-[0.24em] text-[oklch(0.86_0.15_85)]">Precios por volumen</p>
                     <h2 className="display-title mt-3 text-[2.1rem] text-white sm:text-[3rem] lg:text-[4rem]">El precio baja con el volumen.</h2>
-                    <p className="mt-4 max-w-xl text-sm leading-7 text-white/66 sm:text-base">Tres niveles de precio según la versión y la cantidad. Sin pasos extra, sin códigos.</p>
+                    <p className="mt-4 max-w-xl text-sm leading-7 text-white/66 sm:text-base">Dos niveles de precio según la versión y la cantidad. Sin pasos extra, sin códigos.</p>
+                    <a
+                      href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHOLESALE_WHATSAPP_TEXT)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="chrome-button mt-5 inline-flex h-11 items-center justify-center px-5 text-[0.72rem] font-extrabold uppercase tracking-[0.14em]"
+                      onClick={() => trackEvent("click_cta_wholesale_whatsapp")}
+                    >
+                      Mayorista por WhatsApp
+                    </a>
                   </div>
 
                   <div className="tier-grid" data-animate="scale">
@@ -1631,6 +2100,34 @@ export default function Home() {
                     })}
                   </div>
                 </div>
+
+                <div className="relative z-10 mt-6 grid gap-4 lg:grid-cols-2">
+                  <div className="rounded-[1.2rem] border border-white/10 bg-[oklch(0.14_0.01_255_/_0.65)] p-4">
+                    <p className="text-[0.64rem] font-extrabold uppercase tracking-[0.2em] text-[oklch(0.86_0.15_85)]">Comparador rápido</p>
+                    <div className="mt-3 space-y-2">
+                      {PRODUCT_COMPARISON.map((item) => (
+                        <div key={item.label} className="rounded-xl border border-white/8 bg-white/[0.03] p-3">
+                          <p className="text-xs font-black uppercase tracking-[0.12em] text-white">{item.label}</p>
+                          <p className="mt-1 text-xs text-white/68">Fit: {item.fit}</p>
+                          <p className="text-xs text-white/68">Ideal: {item.ideal}</p>
+                          <p className="mt-1 text-xs font-bold text-[oklch(0.86_0.15_85)]">{item.price}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="rounded-[1.2rem] border border-white/10 bg-[oklch(0.14_0.01_255_/_0.65)] p-4">
+                    <p className="text-[0.64rem] font-extrabold uppercase tracking-[0.2em] text-[oklch(0.57_0.17_258)]">Prueba social</p>
+                    <div className="mt-3 space-y-2">
+                      {QUICK_TESTIMONIALS.map((item) => (
+                        <div key={item.author} className="rounded-xl border border-white/8 bg-white/[0.03] p-3">
+                          <p className="text-sm leading-6 text-white/80">“{item.quote}”</p>
+                          <p className="mt-1 text-xs font-bold uppercase tracking-[0.1em] text-white/56">{item.author}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
               </section>
 
               <section id="contacto" className="section-shell p-4 sm:p-6 lg:p-10" data-theme-section data-bg-start="oklch(0.17 0.012 255)" data-bg-end="oklch(0.09 0.012 255)" data-bg-glow="oklch(0.57 0.17 258 / 0.14)">
@@ -1639,23 +2136,10 @@ export default function Home() {
                     <div data-animate="up">
                       <p className="text-[0.68rem] font-extrabold uppercase tracking-[0.24em] text-[oklch(0.57_0.17_258)]">Contacto</p>
                       <h2 className="display-title mt-3 text-[2.1rem] text-white sm:text-[3rem] lg:text-[4rem]">Dónde seguir y dónde comprar.</h2>
-                      <p className="mt-4 max-w-xl text-sm leading-7 text-white/66 sm:text-base">Todo el cierre de la landing apunta aquí: mensaje, ubicación y contacto directo.</p>
+                      <p className="mt-4 max-w-xl text-sm leading-7 text-white/66 sm:text-base">Instagram y ubicación de la boutique en Montería.</p>
                     </div>
 
                     <div className="mt-6 space-y-4">
-                      <div className="glass-card rounded-[1.4rem] border p-4 sm:p-5" data-animate="right">
-                        <div className="flex items-start gap-4">
-                          <MessageCircle className="mt-1 h-5 w-5 text-[oklch(0.86_0.15_85)]" />
-                          <div>
-                            <p className="font-bold text-white">WhatsApp</p>
-                            <p className="mt-1 text-sm text-white/65">{WHATSAPP_DISPLAY}</p>
-                            <a href={`https://wa.me/${WHATSAPP_NUMBER}`} target="_blank" rel="noopener noreferrer" className="mt-4 inline-flex items-center text-sm font-bold text-[oklch(0.86_0.15_85)]">
-                              Escribir ahora <ArrowUpRight className="ml-2 h-4 w-4" />
-                            </a>
-                          </div>
-                        </div>
-                      </div>
-
                       <div className="glass-card rounded-[1.4rem] border p-4 sm:p-5" data-animate="right">
                         <div className="flex items-start gap-4">
                           <Instagram className="mt-1 h-5 w-5 text-[oklch(0.63_0.2_28)]" />
@@ -1781,14 +2265,17 @@ export default function Home() {
                   type="button"
                   className={`${cart.length === 0 ? "ghost-button text-white/52" : "chrome-button"} mt-6 h-12 w-full font-extrabold uppercase tracking-[0.16em]`}
                   disabled={cart.length === 0}
-                  onClick={() => setCheckoutOpen(true)}
+                  onClick={() => {
+                    trackEvent("open_checkout_panel");
+                    setCheckoutOpen(true);
+                  }}
                 >
                   Finalizar compra
                 </Button>
                 <p className="mt-3 text-center text-xs leading-5 text-white/45">Se genera un mensaje listo para enviar por WhatsApp.</p>
               </section>
 
-              <section className="service-panel" data-animate="up">
+              <section className="service-panel hidden lg:block" data-animate="up">
                 <div className="service-row">
                   <Gauge className="h-4 w-4 text-[oklch(0.86_0.15_85)]" />
                   <div>
@@ -1874,7 +2361,14 @@ export default function Home() {
               <p className="text-[0.62rem] font-extrabold uppercase tracking-[0.2em] text-white/45">Tu selección</p>
               <p className="mt-1 text-sm font-bold text-white">{totals.units} {totals.units === 1 ? "unidad" : "unidades"} · {formatPrice(totals.total)}</p>
             </div>
-            <Button type="button" className="chrome-button h-11 px-5 text-sm font-extrabold" onClick={() => setCheckoutOpen(true)}>
+            <Button
+              type="button"
+              className="chrome-button h-11 px-5 text-sm font-extrabold"
+              onClick={() => {
+                trackEvent("open_checkout_mobile_bar");
+                setCheckoutOpen(true);
+              }}
+            >
               Comprar
             </Button>
           </div>
@@ -1882,8 +2376,26 @@ export default function Home() {
       </main>
 
       <Dialog open={checkoutOpen} onOpenChange={setCheckoutOpen}>
-        <DialogContent className="max-h-[88svh] overflow-y-auto border-white/10 bg-[oklch(0.12_0.01_255_/_0.96)] p-0 text-white sm:max-w-[34rem]">
-          <div className="p-5 sm:p-8">
+        <DialogContent className="max-h-[82svh] w-[calc(100vw-1rem)] overflow-y-auto rounded-[1.2rem] border-white/10 bg-[oklch(0.12_0.01_255_/_0.96)] p-0 text-white sm:max-h-[88svh] sm:w-full sm:rounded-[1.6rem] sm:max-w-[34rem]">
+          <div className="p-4 sm:p-8">
+            <div className="mb-3 flex items-center justify-between sm:mb-4">
+              <button
+                type="button"
+                className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/6 px-3 py-1.5 text-[0.65rem] font-bold uppercase tracking-[0.14em] text-white/80 transition hover:bg-white/10 hover:text-white"
+                onClick={() => setCheckoutOpen(false)}
+              >
+                <ArrowLeft className="h-3.5 w-3.5" />
+                Volver
+              </button>
+              <button
+                type="button"
+                aria-label="Cerrar checkout"
+                className="flex h-8 w-8 items-center justify-center rounded-full border border-white/12 bg-white/6 text-white/70 transition hover:bg-white/12 hover:text-white"
+                onClick={() => setCheckoutOpen(false)}
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
             <DialogHeader>
               <DialogTitle className="display-title text-[2rem] text-white sm:text-3xl">Completa tu pedido</DialogTitle>
               <DialogDescription className="mt-3 max-w-md text-sm leading-7 text-white/60">Validamos tus datos y generamos el mensaje final para WhatsApp.</DialogDescription>
@@ -1907,6 +2419,55 @@ export default function Home() {
                 <input value={customer.email} onChange={(event) => setCustomer((current) => ({ ...current, email: event.target.value }))} placeholder="tu@correo.com" className="h-12 w-full rounded-2xl border border-white/10 bg-white/4 px-4 text-sm text-white outline-none transition focus:border-[oklch(0.86_0.15_85)] focus:bg-white/8" />
                 {customerErrors.email && <p className="mt-2 text-xs text-[oklch(0.63_0.2_28)]">{customerErrors.email}</p>}
               </div>
+
+              <div>
+                <label className="mb-2 block text-xs font-extrabold uppercase tracking-[0.22em] text-white/52">Método de entrega</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    className={`h-11 rounded-2xl border text-sm font-bold transition ${customer.deliveryMethod === "envio" ? "border-[oklch(0.86_0.15_85)] bg-[oklch(0.86_0.15_85_/_0.12)] text-white" : "border-white/10 bg-white/4 text-white/70 hover:bg-white/8"}`}
+                    onClick={() => setCustomer((current) => ({ ...current, deliveryMethod: "envio" }))}
+                  >
+                    Envío
+                  </button>
+                  <button
+                    type="button"
+                    className={`h-11 rounded-2xl border text-sm font-bold transition ${customer.deliveryMethod === "retiro" ? "border-[oklch(0.86_0.15_85)] bg-[oklch(0.86_0.15_85_/_0.12)] text-white" : "border-white/10 bg-white/4 text-white/70 hover:bg-white/8"}`}
+                    onClick={() => setCustomer((current) => ({ ...current, deliveryMethod: "retiro" }))}
+                  >
+                    Retiro tienda
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid gap-5 sm:grid-cols-2">
+                <div>
+                  <label className="mb-2 block text-xs font-extrabold uppercase tracking-[0.22em] text-white/52">Ciudad</label>
+                  <input value={customer.city} onChange={(event) => setCustomer((current) => ({ ...current, city: event.target.value }))} placeholder="Montería" className="h-12 w-full rounded-2xl border border-white/10 bg-white/4 px-4 text-sm text-white outline-none transition focus:border-[oklch(0.86_0.15_85)] focus:bg-white/8" />
+                  {customerErrors.city && <p className="mt-2 text-xs text-[oklch(0.63_0.2_28)]">{customerErrors.city}</p>}
+                </div>
+                <div>
+                  <label className="mb-2 block text-xs font-extrabold uppercase tracking-[0.22em] text-white/52">Barrio / zona</label>
+                  <input value={customer.neighborhood} onChange={(event) => setCustomer((current) => ({ ...current, neighborhood: event.target.value }))} placeholder="Juan XXIII" className="h-12 w-full rounded-2xl border border-white/10 bg-white/4 px-4 text-sm text-white outline-none transition focus:border-[oklch(0.86_0.15_85)] focus:bg-white/8" />
+                  {customerErrors.neighborhood && <p className="mt-2 text-xs text-[oklch(0.63_0.2_28)]">{customerErrors.neighborhood}</p>}
+                </div>
+              </div>
+
+              {customer.deliveryMethod === "envio" && (
+                <>
+                  <div>
+                    <label className="mb-2 block text-xs font-extrabold uppercase tracking-[0.22em] text-white/52">Dirección de entrega</label>
+                    <input value={customer.address} onChange={(event) => setCustomer((current) => ({ ...current, address: event.target.value }))} placeholder="Calle, carrera, número y apartamento/casa" className="h-12 w-full rounded-2xl border border-white/10 bg-white/4 px-4 text-sm text-white outline-none transition focus:border-[oklch(0.86_0.15_85)] focus:bg-white/8" />
+                    {customerErrors.address && <p className="mt-2 text-xs text-[oklch(0.63_0.2_28)]">{customerErrors.address}</p>}
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-xs font-extrabold uppercase tracking-[0.22em] text-white/52">Referencia</label>
+                    <input value={customer.reference} onChange={(event) => setCustomer((current) => ({ ...current, reference: event.target.value }))} placeholder="Casa esquinera, portón negro, al lado de..." className="h-12 w-full rounded-2xl border border-white/10 bg-white/4 px-4 text-sm text-white outline-none transition focus:border-[oklch(0.86_0.15_85)] focus:bg-white/8" />
+                    {customerErrors.reference && <p className="mt-2 text-xs text-[oklch(0.63_0.2_28)]">{customerErrors.reference}</p>}
+                  </div>
+                </>
+              )}
             </div>
 
             <div className="mt-7 rounded-[1.5rem] border border-white/8 bg-white/4 p-4">
@@ -1938,6 +2499,55 @@ export default function Home() {
               Volver
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!imagePreview} onOpenChange={(open) => !open && setImagePreview(null)}>
+        <DialogContent className="max-w-[92vw] border-white/10 bg-[oklch(0.09_0.01_255_/_0.98)] p-3 text-white sm:max-w-[28rem]">
+          {imagePreview && (
+            <div className="rounded-xl border border-white/10 bg-[oklch(0.12_0.01_255_/_0.85)] p-2">
+              <img src={imagePreview.src} alt={imagePreview.alt} className="mx-auto max-h-[70svh] w-auto object-contain" />
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={sizeGuideOpen} onOpenChange={setSizeGuideOpen}>
+        <DialogContent className="max-h-[86svh] overflow-y-auto border-white/10 bg-[oklch(0.12_0.01_255_/_0.96)] text-white sm:max-w-[34rem]">
+          <DialogHeader>
+            <DialogTitle className="display-title text-3xl text-white">Guía de tallas</DialogTitle>
+            <DialogDescription className="text-sm text-white/62">Medidas aproximadas en centímetros para elegir mejor tu talla.</DialogDescription>
+          </DialogHeader>
+          <div className="mt-3 overflow-hidden rounded-2xl border border-white/10">
+            <table className="w-full text-sm">
+              <thead className="bg-white/6 text-white/72">
+                <tr>
+                  <th className="px-3 py-2 text-left">Talla</th>
+                  <th className="px-3 py-2 text-left">Pecho</th>
+                  <th className="px-3 py-2 text-left">Largo</th>
+                  <th className="px-3 py-2 text-left">Referencia</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/8 text-white/82">
+                {[
+                  ["XS", "88-92", "64-66", "Ajustado"],
+                  ["S", "92-96", "66-68", "Regular"],
+                  ["M", "96-102", "68-71", "Regular"],
+                  ["L", "102-108", "71-74", "Cómodo"],
+                  ["XL", "108-114", "74-77", "Amplio"],
+                  ["XXL", "114-120", "77-80", "Amplio"],
+                ].map((row) => (
+                  <tr key={row[0]}>
+                    <td className="px-3 py-2 font-bold">{row[0]}</td>
+                    <td className="px-3 py-2">{row[1]} cm</td>
+                    <td className="px-3 py-2">{row[2]} cm</td>
+                    <td className="px-3 py-2">{row[3]}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="mt-3 text-xs text-white/58">Tip: si te gusta holgado, sube una talla. Para fit pro, mantén tu talla habitual.</p>
         </DialogContent>
       </Dialog>
     </div>
