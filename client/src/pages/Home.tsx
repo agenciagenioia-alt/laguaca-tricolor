@@ -3,7 +3,17 @@
  * Menos texto, más presencia visual, más ritmo editorial y una estructura más apta
  * para móvil. Cada bloque debe sentirse más vivo, táctil y específico de marca.
  */
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type MouseEvent as ReactMouseEvent,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -674,6 +684,11 @@ export default function Home() {
   const [isMobileViewport, setIsMobileViewport] = useState(false);
   const loadingRef = useRef<HTMLDivElement | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
+  const heroHeadlineFxRef = useRef<HTMLDivElement | null>(null);
+  const heroHeadlinePointerRef = useRef({ rx: 0, ry: 0 });
+  const heroHeadlineGyroRef = useRef({ rx: 0, ry: 0 });
+  const heroGyroGamma0Ref = useRef<number | null>(null);
+  const [heroHeadlineGyroEnabled, setHeroHeadlineGyroEnabled] = useState(false);
 
   const playerCaballero = PRODUCTS.find((product) => product.id === "player-caballero")!;
   const playerDama = PRODUCTS.find((product) => product.id === "player-dama")!;
@@ -730,6 +745,65 @@ export default function Home() {
     }
   }, []);
 
+  const applyHeroHeadlineTransform = useCallback(() => {
+    const el = heroHeadlineFxRef.current;
+    if (!el) return;
+    const p = heroHeadlinePointerRef.current;
+    const g = heroHeadlineGyroRef.current;
+    el.style.transform = `perspective(900px) rotateX(${p.rx + g.rx}deg) rotateY(${p.ry + g.ry}deg)`;
+  }, []);
+
+  const handleHeroHeadlinePointerMove = useCallback(
+    (e: ReactPointerEvent<HTMLDivElement>) => {
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      const el = heroHeadlineFxRef.current;
+      if (!el) return;
+      el.classList.add("hero-headline-fx--pointer");
+      const rect = el.getBoundingClientRect();
+      const nx = (e.clientX - rect.left) / rect.width;
+      const ny = (e.clientY - rect.top) / rect.height;
+      const narrow = window.innerWidth < 1024;
+      const maxY = narrow ? 3.8 : 4.5;
+      const maxX = narrow ? 2.8 : 3.2;
+      heroHeadlinePointerRef.current.ry = (nx - 0.5) * 2 * maxY;
+      heroHeadlinePointerRef.current.rx = (0.5 - ny) * 2 * maxX;
+      el.style.setProperty("--hx", `${nx * 100}%`);
+      el.style.setProperty("--hy", `${ny * 100}%`);
+      applyHeroHeadlineTransform();
+    },
+    [applyHeroHeadlineTransform],
+  );
+
+  const handleHeroHeadlinePointerLeave = useCallback(() => {
+    const el = heroHeadlineFxRef.current;
+    if (!el) return;
+    el.classList.remove("hero-headline-fx--pointer");
+    heroHeadlinePointerRef.current.rx = 0;
+    heroHeadlinePointerRef.current.ry = 0;
+    el.style.setProperty("--hx", "50%");
+    el.style.setProperty("--hy", "45%");
+    applyHeroHeadlineTransform();
+  }, [applyHeroHeadlineTransform]);
+
+  const handleHeroHeadlinePointerDown = useCallback(async () => {
+    if (heroHeadlineGyroEnabled) return;
+    const DOE = DeviceOrientationEvent as unknown as { requestPermission?: () => Promise<PermissionState> };
+    if (typeof DOE.requestPermission === "function") {
+      try {
+        const s = await DOE.requestPermission();
+        if (s === "granted") {
+          heroGyroGamma0Ref.current = null;
+          setHeroHeadlineGyroEnabled(true);
+        }
+      } catch {
+        /* sin permiso */
+      }
+    } else {
+      heroGyroGamma0Ref.current = null;
+      setHeroHeadlineGyroEnabled(true);
+    }
+  }, [heroHeadlineGyroEnabled]);
+
   const handleTilt = useCallback((e: ReactMouseEvent<HTMLDivElement>) => {
     const el = e.currentTarget;
     const rect = el.getBoundingClientRect();
@@ -764,6 +838,32 @@ export default function Home() {
   useEffect(() => {
     setHeroBackView((current) => ({ ...current, [activeHeroSlide.id]: false }));
   }, [heroSlideIdx]);
+
+  useEffect(() => {
+    if (!heroHeadlineGyroEnabled) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const onOrient = (e: DeviceOrientationEvent) => {
+      if (e.gamma == null) return;
+      if (heroGyroGamma0Ref.current == null) heroGyroGamma0Ref.current = e.gamma;
+      const delta = e.gamma - heroGyroGamma0Ref.current;
+      const clamped = Math.max(-22, Math.min(22, delta));
+      heroHeadlineGyroRef.current.ry = clamped * 0.1;
+      heroHeadlineGyroRef.current.rx = 0;
+      applyHeroHeadlineTransform();
+    };
+    window.addEventListener("deviceorientation", onOrient, true);
+    return () => window.removeEventListener("deviceorientation", onOrient, true);
+  }, [heroHeadlineGyroEnabled, applyHeroHeadlineTransform]);
+
+  useEffect(() => {
+    return () => {
+      const el = heroHeadlineFxRef.current;
+      if (el) {
+        el.style.transform = "";
+        el.classList.remove("hero-headline-fx--pointer");
+      }
+    };
+  }, []);
 
   const totals = useMemo(() => {
     const units = cart.reduce((acc, item) => acc + item.quantity, 0);
@@ -1453,20 +1553,29 @@ export default function Home() {
                   Boutique premium · Montería · drop 2026
                 </div>
 
-                <h1
-                  data-hero="title"
-                  className="hero-headline-interactive hero-display-title display-title mt-5 max-w-3xl text-[2.85rem] text-white sm:mt-6 sm:text-[4.25rem] lg:text-[5.6rem]"
+                <div
+                  ref={heroHeadlineFxRef}
+                  className="hero-headline-interactive hero-headline-fx"
+                  style={{ "--hx": "50%", "--hy": "45%" } as CSSProperties}
+                  onPointerMove={handleHeroHeadlinePointerMove}
+                  onPointerLeave={handleHeroHeadlinePointerLeave}
+                  onPointerDown={handleHeroHeadlinePointerDown}
                 >
-                  <span className="hero-title-line">
-                    <span className="hero-word-blue">La</span> <span className="hero-word-tricolor-core">Tricolor</span>
-                    <span className="hero-title-comma">,</span>
-                  </span>
-                  <span className="hero-title-line mt-1 block sm:mt-0">
-                    <span className="hero-title-sub">en modo </span>
-                    <span className="hero-word-gold">colección</span>
-                    <span className="hero-word-red-dot">.</span>
-                  </span>
-                </h1>
+                  <h1
+                    data-hero="title"
+                    className="hero-display-title display-title mt-5 max-w-3xl text-[2.85rem] text-white sm:mt-6 sm:text-[4.25rem] lg:text-[5.6rem]"
+                  >
+                    <span className="hero-title-line">
+                      <span className="hero-word-blue">La</span> <span className="hero-word-tricolor-core">Tricolor</span>
+                      <span className="hero-title-comma">,</span>
+                    </span>
+                    <span className="hero-title-line mt-1 block sm:mt-0">
+                      <span className="hero-title-sub">en modo </span>
+                      <span className="hero-word-gold">colección</span>
+                      <span className="hero-word-red-dot">.</span>
+                    </span>
+                  </h1>
+                </div>
 
                 <div data-hero="lead" className="hero-lead-panel mt-5 max-w-xl sm:mt-6">
                   <p className="text-sm leading-7 text-white/78 sm:text-base sm:leading-8">
@@ -1977,7 +2086,7 @@ export default function Home() {
               </article>
 
               {/* Drop interlude */}
-              <div className="drop-interlude hidden lg:block" data-animate="up" style={{ "--interlude-accent": "oklch(0.63 0.2 28)" } as React.CSSProperties}>
+              <div className="drop-interlude hidden lg:block" data-animate="up" style={{ "--interlude-accent": "oklch(0.63 0.2 28)" } as CSSProperties}>
                 <span className="drop-interlude-label" style={{ color: "oklch(0.63 0.2 28)" }}>Drop 03</span>
                 <h2 className="drop-interlude-title">Hincha</h2>
                 <p className="drop-interlude-sub">La versión más urbana del drop. Para la tribuna y la calle.</p>
