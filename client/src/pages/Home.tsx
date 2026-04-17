@@ -1454,7 +1454,7 @@ export default function Home() {
                   Diseñada para destacar: siluetas player, training y hincha en una compra directa, rápida y sin fricción.
                 </p>
 
-                <div data-hero="actions" className="mt-7 flex flex-col gap-3 sm:flex-row">
+                <div data-hero="actions" className="mt-7">
                   <Button
                     type="button"
                     className="chrome-button h-13 px-6 text-sm font-extrabold uppercase tracking-[0.16em]"
@@ -1466,15 +1466,6 @@ export default function Home() {
                     Ver colección
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
-                  <a
-                    href={`https://wa.me/${WHATSAPP_NUMBER}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="ghost-button inline-flex h-13 items-center justify-center px-6 text-sm font-bold uppercase tracking-[0.16em]"
-                    onClick={() => trackEvent("click_cta_hero_whatsapp")}
-                  >
-                    WhatsApp directo
-                  </a>
                 </div>
                 <p className="mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-[oklch(0.86_0.15_85)]/90">
                   Drop activo hoy · stock limitado por talla
