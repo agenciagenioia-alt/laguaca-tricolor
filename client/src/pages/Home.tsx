@@ -689,8 +689,10 @@ export default function Home() {
   const heroHeadlineFxRef = useRef<HTMLDivElement | null>(null);
   const heroHeadlinePointerRef = useRef({ rx: 0, ry: 0 });
   const heroHeadlineGyroRef = useRef({ rx: 0, ry: 0 });
+  const pageGyroRef = useRef({ x: 0, y: 0 });
   const heroGyroGamma0Ref = useRef<number | null>(null);
   const [heroHeadlineGyroEnabled, setHeroHeadlineGyroEnabled] = useState(false);
+  const [isTouchLike, setIsTouchLike] = useState(false);
 
   const playerCaballero = PRODUCTS.find((product) => product.id === "player-caballero")!;
   const playerDama = PRODUCTS.find((product) => product.id === "player-dama")!;
@@ -755,6 +757,25 @@ export default function Home() {
     el.style.transform = `perspective(900px) rotateX(${p.rx + g.rx}deg) rotateY(${p.ry + g.ry}deg)`;
   }, []);
 
+  const requestMotionAccess = useCallback(async () => {
+    if (heroHeadlineGyroEnabled) return;
+    const DOE = DeviceOrientationEvent as unknown as { requestPermission?: () => Promise<PermissionState> };
+    if (typeof DOE.requestPermission === "function") {
+      try {
+        const state = await DOE.requestPermission();
+        if (state === "granted") {
+          heroGyroGamma0Ref.current = null;
+          setHeroHeadlineGyroEnabled(true);
+        }
+      } catch {
+        /* permiso denegado o no disponible */
+      }
+      return;
+    }
+    heroGyroGamma0Ref.current = null;
+    setHeroHeadlineGyroEnabled(true);
+  }, [heroHeadlineGyroEnabled]);
+
   const handleHeroHeadlinePointerMove = useCallback(
     (e: ReactPointerEvent<HTMLDivElement>) => {
       if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -788,23 +809,8 @@ export default function Home() {
   }, [applyHeroHeadlineTransform]);
 
   const handleHeroHeadlinePointerDown = useCallback(async () => {
-    if (heroHeadlineGyroEnabled) return;
-    const DOE = DeviceOrientationEvent as unknown as { requestPermission?: () => Promise<PermissionState> };
-    if (typeof DOE.requestPermission === "function") {
-      try {
-        const s = await DOE.requestPermission();
-        if (s === "granted") {
-          heroGyroGamma0Ref.current = null;
-          setHeroHeadlineGyroEnabled(true);
-        }
-      } catch {
-        /* sin permiso */
-      }
-    } else {
-      heroGyroGamma0Ref.current = null;
-      setHeroHeadlineGyroEnabled(true);
-    }
-  }, [heroHeadlineGyroEnabled]);
+    await requestMotionAccess();
+  }, [requestMotionAccess]);
 
   const handleTilt = useCallback((e: ReactMouseEvent<HTMLDivElement>) => {
     const el = e.currentTarget;
@@ -826,6 +832,14 @@ export default function Home() {
     apply();
     media.addEventListener("change", apply);
     return () => media.removeEventListener("change", apply);
+  }, []);
+
+  useEffect(() => {
+    const coarse = window.matchMedia("(pointer: coarse)");
+    const apply = () => setIsTouchLike(coarse.matches || navigator.maxTouchPoints > 0);
+    apply();
+    coarse.addEventListener("change", apply);
+    return () => coarse.removeEventListener("change", apply);
   }, []);
 
   useEffect(() => {
@@ -855,11 +869,13 @@ export default function Home() {
     const render = () => {
       current.x += (target.x - current.x) * 0.075;
       current.y += (target.y - current.y) * 0.075;
-      const pctX = `${(current.x * 100).toFixed(2)}%`;
-      const pctY = `${(current.y * 100).toFixed(2)}%`;
+      const effectiveX = Math.max(0, Math.min(1, current.x + pageGyroRef.current.x));
+      const effectiveY = Math.max(0, Math.min(1, current.y + pageGyroRef.current.y));
+      const pctX = `${(effectiveX * 100).toFixed(2)}%`;
+      const pctY = `${(effectiveY * 100).toFixed(2)}%`;
       root.style.setProperty("--pointer-x", pctX);
       root.style.setProperty("--pointer-y", pctY);
-      ambient.style.transform = `translate3d(${((current.x - 0.5) * 22).toFixed(2)}px, ${((current.y - 0.42) * 16).toFixed(2)}px, 0)`;
+      ambient.style.transform = `translate3d(${((effectiveX - 0.5) * 22).toFixed(2)}px, ${((effectiveY - 0.42) * 16).toFixed(2)}px, 0)`;
       raf = window.requestAnimationFrame(render);
     };
 
@@ -898,6 +914,8 @@ export default function Home() {
       vx: number;
       vy: number;
       size: number;
+      spin: number;
+      shape: "dot" | "confetti";
       alpha: number;
       twinkle: number;
       color: string;
@@ -919,8 +937,10 @@ export default function Home() {
           y: Math.random() * height,
           vx: (Math.random() - 0.5) * 0.22,
           vy: (Math.random() - 0.5) * 0.18,
-          size: 0.8 + Math.random() * 2.1,
-          alpha: 0.15 + Math.random() * 0.45,
+          size: 1.2 + Math.random() * 2.8,
+          spin: Math.random() * Math.PI * 2,
+          shape: Math.random() > 0.78 ? "confetti" : "dot",
+          alpha: 0.26 + Math.random() * 0.58,
           twinkle: Math.random() * Math.PI * 2,
           color: colors[Math.floor(Math.random() * colors.length)],
         });
@@ -936,7 +956,7 @@ export default function Home() {
       canvas.style.width = `${width}px`;
       canvas.style.height = `${height}px`;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      const count = width < 768 ? 22 : width < 1200 ? 34 : 48;
+      const count = width < 768 ? 44 : width < 1200 ? 70 : 96;
       populate(count);
     };
 
@@ -951,9 +971,10 @@ export default function Home() {
 
       for (const p of particles) {
         p.twinkle += 0.015 + p.size * 0.002;
+        p.spin += 0.018;
         const twinkle = 0.72 + Math.sin(p.twinkle) * 0.28;
-        const pullX = (pointer.x / width - 0.5) * 0.008;
-        const pullY = (pointer.y / height - 0.45) * 0.006;
+        const pullX = (pointer.x / width - 0.5) * 0.013;
+        const pullY = (pointer.y / height - 0.45) * 0.01;
         p.vx += pullX;
         p.vy += pullY;
         p.vx *= 0.985;
@@ -966,11 +987,19 @@ export default function Home() {
         if (p.y < -12) p.y = height + 12;
         if (p.y > height + 12) p.y = -12;
 
-        ctx.beginPath();
         ctx.fillStyle = p.color;
         ctx.globalAlpha = p.alpha * twinkle;
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        ctx.fill();
+        if (p.shape === "dot") {
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+          ctx.fill();
+        } else {
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.spin);
+          ctx.fillRect(-p.size * 0.6, -p.size * 0.35, p.size * 1.2, p.size * 0.7);
+          ctx.restore();
+        }
       }
 
       ctx.globalAlpha = 1;
@@ -1001,6 +1030,8 @@ export default function Home() {
       const clamped = Math.max(-22, Math.min(22, delta));
       heroHeadlineGyroRef.current.ry = clamped * 0.1;
       heroHeadlineGyroRef.current.rx = 0;
+      pageGyroRef.current.x = clamped * 0.0018;
+      pageGyroRef.current.y = 0;
       applyHeroHeadlineTransform();
     };
     window.addEventListener("deviceorientation", onOrient, true);
@@ -1014,6 +1045,8 @@ export default function Home() {
         el.style.transform = "";
         el.classList.remove("hero-headline-fx--pointer");
       }
+      pageGyroRef.current.x = 0;
+      pageGyroRef.current.y = 0;
     };
   }, []);
 
@@ -1597,6 +1630,17 @@ export default function Home() {
         <div className="noise-overlay" />
       </div>
       <canvas ref={particlesCanvasRef} className="page-particles-canvas pointer-events-none fixed inset-0 z-[3]" aria-hidden="true" />
+      {isTouchLike && !heroHeadlineGyroEnabled && (
+        <button
+          type="button"
+          className="global-motion-trigger fixed bottom-4 right-4 z-[35] lg:bottom-6 lg:right-6"
+          onClick={() => {
+            void requestMotionAccess();
+          }}
+        >
+          Activar movimiento
+        </button>
+      )}
 
       {/* Mobile nav overlay */}
       {mobileNavOpen && (

@@ -477,19 +477,40 @@
   }
 
   .page-particles-canvas {
-    opacity: 0.46;
+    opacity: 0.68;
     mix-blend-mode: screen;
     transition: opacity 320ms ease;
   }
 
   .page-pointer-root.page-pointer-active .page-particles-canvas {
-    opacity: 0.62;
+    opacity: 0.84;
   }
 
   @media (max-width: 767px) {
     .page-particles-canvas {
-      opacity: 0.36;
+      opacity: 0.58;
     }
+  }
+
+  .global-motion-trigger {
+    border-radius: 999px;
+    border: 1px solid oklch(0.9 0.01 285 / 0.22);
+    background: linear-gradient(135deg, oklch(0.23 0.04 258 / 0.9), oklch(0.13 0.01 255 / 0.94));
+    color: oklch(0.96 0.01 95);
+    padding: 0.66rem 1rem;
+    font-size: 0.67rem;
+    font-weight: 900;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    box-shadow:
+      0 20px 42px oklch(0 0 0 / 0.38),
+      0 0 0 1px oklch(0.9 0.17 92 / 0.2) inset;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .global-motion-trigger:active {
+    transform: scale(0.97);
   }
 
   .display-title {
