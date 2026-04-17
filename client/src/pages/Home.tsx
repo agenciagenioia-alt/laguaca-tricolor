@@ -105,6 +105,7 @@ const WHATSAPP_NUMBER = "573206473108";
 const WHATSAPP_DISPLAY = "+57 3206473108";
 const WHATSAPP_FORMATTED = "+57 3206473108";
 const INSTAGRAM_URL = "https://www.instagram.com/boutiquelaguaca1/";
+const SOLARIS_INSTAGRAM_URL = "https://www.instagram.com/solaris.ia/";
 
 const HERO_IMAGE =
   "https://d2xsxph8kpxj0f.cloudfront.net/310519663548466589/HjT5TMGRubruxMoHSY3yLf/la-guaca-hero-reference-U2Loqi89sFxEsxcefVFjur.webp";
@@ -2637,7 +2638,19 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="mt-8 border-t border-white/8 pt-5 text-center text-xs uppercase tracking-[0.2em] text-white/35">© 2026 Boutique La Guaca · Selección Colombia 2026</div>
+            <div className="mt-8 border-t border-white/8 pt-5 text-center text-xs uppercase tracking-[0.2em] text-white/35">
+              © 2026 Boutique La Guaca · Selección Colombia 2026
+              <span className="mx-2 text-white/20">·</span>
+              Hecho por{" "}
+              <a
+                href={SOLARIS_INSTAGRAM_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-bold text-[oklch(0.9_0.17_92)] transition hover:text-[oklch(0.56_0.18_258)]"
+              >
+                Solaris.ia
+              </a>
+            </div>
           </div>
         </footer>
 
